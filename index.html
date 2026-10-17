@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
   <title>Cashies - Quản Lý Tài Chính</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💴</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22[http://www.w3.org/2000/svg%22](http://www.w3.org/2000/svg%22) viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💴</text></svg>">
 
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
   <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
 
   <!-- Firebase SDKs (v9 Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="[https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js](https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js)"></script>
+  <script src="[https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js](https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js)"></script>
+  <script src="[https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js](https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js)"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-12">
 
@@ -36,6 +36,7 @@
         </svg>
         <span>Đăng nhập với Google</span>
       </button>
+      <p id="appStatus" class="text-[11px] text-slate-400 mt-4">Đang khởi tạo ứng dụng...</p>
     </div>
   </div>
 
@@ -52,4 +53,427 @@
         <button id="btnConfigKey" title="Cài đặt Gemini API Key" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition">
           🔑 Key
         </button>
-        <button id="btnLogout" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded
+        <button id="btnLogout" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-medium transition">
+          Đăng xuất
+        </button>
+      </div>
+    </header>
+
+    <!-- Bộ Lọc Tháng -->
+    <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
+      <span class="text-xs font-semibold text-slate-500 uppercase">Tháng hiển thị</span>
+      <input type="month" id="filterMonth" class="text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-slate-400">
+    </div>
+
+    <!-- Tổng Quan Số Liệu Hàng Tháng (Yên Nhật) -->
+    <section class="grid grid-cols-3 gap-2.5">
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
+        <p id="totalIncome" class="text-base font-bold text-emerald-600 mt-1">¥0</p>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
+        <p id="totalExpense" class="text-base font-bold text-rose-600 mt-1">¥0</p>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs text-slate-400 font-medium">Số Dư</p>
+        <p id="netBalance" class="text-base font-bold text-slate-800 mt-1">¥0</p>
+      </div>
+    </section>
+
+    <!-- Ngân Sách Tháng -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-semibold text-slate-700">Ngân sách tháng</span>
+        <div class="flex items-center gap-1">
+          <span class="text-slate-400">Trần:</span>
+          <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
+            <span id="budgetDisplay">¥0</span>
+          </button>
+        </div>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+        <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+      </div>
+      <div class="flex justify-between text-[11px] text-slate-400">
+        <span id="budgetStatus">Chưa đặt hạn mức</span>
+        <span id="budgetPercent">0%</span>
+      </div>
+    </section>
+
+    <!-- Form Ghi Nhận Giao Dịch / Quét Hóa Đơn -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-sm text-slate-800">Ghi nhận giao dịch</h3>
+        
+        <label class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span id="scanStatus">Quét Hóa Đơn (AI)</span>
+          <input type="file" id="receiptInput" accept="image/*" class="hidden">
+        </label>
+      </div>
+
+      <form id="txForm" class="space-y-3">
+        <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button type="button" id="btnTypeExpense" class="py-1.5 rounded-lg bg-white shadow-xs text-rose-600 transition">Chi tiêu (-)</button>
+          <button type="button" id="btnTypeIncome" class="py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition">Thu nhập (+)</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Số tiền (¥)</label>
+            <input type="number" id="txAmount" placeholder="vd: 1200" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ngày giao dịch</label>
+            <input type="date" id="txDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Danh mục</label>
+            <select id="txCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+              <option value="Ăn uống">Ăn uống</option>
+              <option value="Mua sắm">Mua sắm</option>
+              <option value="Đi lại">Đi lại</option>
+              <option value="Nhà cửa & Hóa đơn">Nhà cửa & Hóa đơn</option>
+              <option value="Học tập / Công việc">Học tập / Công việc</option>
+              <option value="Lương">Lương</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ghi chú</label>
+            <input type="text" id="txNote" placeholder="vd: Siêu thị Gyomu, Bento..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-sm transition">
+          Lưu Giao Dịch
+        </button>
+      </form>
+    </section>
+
+    <!-- Sổ Nợ Việt Nam (VNĐ) -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div>
+          <h3 class="font-bold text-sm text-slate-800">Sổ Nợ (Việt Nam)</h3>
+          <p class="text-[11px] text-slate-400">Theo dõi nợ riêng bằng đơn vị VNĐ</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 font-medium">Tổng nợ còn lại</span>
+          <p id="totalRemainingDebt" class="text-sm font-bold text-rose-600">0 ₫</p>
+        </div>
+      </div>
+
+      <form id="debtForm" class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+        <p class="text-xs font-semibold text-slate-600">Thêm khoản nợ mới</p>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="debtTitle" placeholder="Tên khoản nợ (vd: Vay ngân hàng)" required 
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+          <input type="number" id="debtAmount" placeholder="Số tiền nợ gốc (VNĐ)" required 
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="debtNote" placeholder="Ghi chú / Hạn trả" 
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
+            + Thêm khoản nợ
+          </button>
+        </div>
+      </form>
+
+      <div id="debtList" class="space-y-2.5"></div>
+    </section>
+
+    <!-- Biểu đồ tỷ lệ chi tiêu -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+      <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
+      <div class="h-48 flex items-center justify-center">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Lịch sử giao dịch -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+      <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
+      <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
+    </section>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. CẤU HÌNH FIREBASE
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnGNWD5xmwexs7LZZpwX9kO1GL4QVgsKs",
+      authDomain: "cashies-828a4.firebaseapp.com",
+      projectId: "cashies-828a4",
+      storageBucket: "cashies-828a4.firebasestorage.app",
+      messagingSenderId: "951849166153",
+      appId: "1:951849166153:web:395808afb1efc8ae3e6698",
+      measurementId: "G-4YTYYJ1HVS"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(err) {
+      console.warn(err);
+    });
+
+    // ==========================================
+    // 2. BIẾN TRẠNG THÁI (STATE)
+    // ==========================================
+    let currentUser = null;
+    let transactions = [];
+    let debts = [];
+    let currentType = "expense";
+    let monthlyBudget = 0;
+    let chartInstance = null;
+
+    const loginView = document.getElementById("loginView");
+    const appView = document.getElementById("appView");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnLogout = document.getElementById("btnLogout");
+    const btnConfigKey = document.getElementById("btnConfigKey");
+    const userGreeting = document.getElementById("userGreeting");
+    const appStatus = document.getElementById("appStatus");
+
+    const filterMonth = document.getElementById("filterMonth");
+    const totalIncomeEl = document.getElementById("totalIncome");
+    const totalExpenseEl = document.getElementById("totalExpense");
+    const netBalanceEl = document.getElementById("netBalance");
+
+    const budgetDisplay = document.getElementById("budgetDisplay");
+    const btnSetBudget = document.getElementById("btnSetBudget");
+    const budgetProgress = document.getElementById("budgetProgress");
+    const budgetStatus = document.getElementById("budgetStatus");
+    const budgetPercent = document.getElementById("budgetPercent");
+
+    const btnTypeExpense = document.getElementById("btnTypeExpense");
+    const btnTypeIncome = document.getElementById("btnTypeIncome");
+    const txForm = document.getElementById("txForm");
+    const txAmount = document.getElementById("txAmount");
+    const txDate = document.getElementById("txDate");
+    const txCategory = document.getElementById("txCategory");
+    const txNote = document.getElementById("txNote");
+    const txList = document.getElementById("txList");
+
+    const receiptInput = document.getElementById("receiptInput");
+    const scanStatus = document.getElementById("scanStatus");
+
+    const debtForm = document.getElementById("debtForm");
+    const debtTitle = document.getElementById("debtTitle");
+    const debtAmount = document.getElementById("debtAmount");
+    const debtNote = document.getElementById("debtNote");
+    const debtList = document.getElementById("debtList");
+    const totalRemainingDebt = document.getElementById("totalRemainingDebt");
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    txDate.value = todayStr;
+    filterMonth.value = todayStr.slice(0, 7);
+
+    if (appStatus) {
+      appStatus.innerText = "Hệ thống đã sẵn sàng ✓";
+    }
+
+    // ==========================================
+    // 3. XÁC THỰC NGƯỜI DÙNG (AUTH)
+    // ==========================================
+    btnLogin.addEventListener("click", async function() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        await auth.signInWithPopup(provider);
+      } catch (err) {
+        console.warn("Popup error:", err);
+        if (err.code === "auth/popup-blocked") {
+          auth.signInWithRedirect(provider);
+        } else if (err.code === "auth/popup-closed-by-user") {
+          auth.signInWithRedirect(provider);
+        } else {
+          alert("Lỗi đăng nhập: " + err.message);
+        }
+      }
+    });
+
+    btnLogout.addEventListener("click", function() {
+      auth.signOut();
+    });
+
+    auth.getRedirectResult().catch(function(err) {
+      if (err && err.code) {
+        alert("Lỗi: " + err.message);
+      }
+    });
+
+    auth.onAuthStateChanged(function(user) {
+      currentUser = user;
+      if (user) {
+        loginView.classList.add("hidden");
+        appView.classList.remove("hidden");
+        userGreeting.innerText = user.displayName ? user.displayName : user.email;
+        loadUserSettings();
+        listenToTransactions();
+        listenToDebts();
+      } else {
+        loginView.classList.remove("hidden");
+        appView.classList.add("hidden");
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+      }
+    });
+
+    // ==========================================
+    // 4. CHUYỂN ĐỔI THU / CHI
+    // ==========================================
+    btnTypeExpense.addEventListener("click", function() {
+      currentType = "expense";
+      btnTypeExpense.className = "py-1.5 rounded-lg bg-white shadow-xs text-rose-600 transition";
+      btnTypeIncome.className = "py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition";
+    });
+
+    btnTypeIncome.addEventListener("click", function() {
+      currentType = "income";
+      btnTypeIncome.className = "py-1.5 rounded-lg bg-white shadow-xs text-emerald-600 transition";
+      btnTypeExpense.className = "py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition";
+    });
+
+    // ==========================================
+    // 5. FIRESTORE GIAO DỊCH
+    // ==========================================
+    function listenToTransactions() {
+      if (!currentUser) return;
+      db.collection("users").doc(currentUser.uid).collection("transactions")
+        .orderBy("date", "desc")
+        .onSnapshot(function(snapshot) {
+          transactions = snapshot.docs.map(function(doc) {
+            return Object.assign({ id: doc.id }, doc.data());
+          });
+          renderAll();
+        }, function(err) {
+          console.error("Lỗi:", err);
+        });
+    }
+
+    async function loadUserSettings() {
+      if (!currentUser) return;
+      const doc = await db.collection("users").doc(currentUser.uid).get();
+      if (doc.exists && doc.data().monthlyBudget) {
+        monthlyBudget = doc.data().monthlyBudget;
+      }
+      renderBudget(0);
+    }
+
+    btnSetBudget.addEventListener("click", async function() {
+      const defaultVal = monthlyBudget ? String(monthlyBudget) : "";
+      const input = prompt("Nhập hạn mức chi tiêu tháng (¥):", defaultVal);
+      if (input !== null) {
+        const parsed = parseInt(input, 10);
+        const val = isNaN(parsed) ? 0 : parsed;
+        monthlyBudget = val;
+        await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
+        renderAll();
+      }
+    });
+
+    txForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const record = {
+        amount: Math.abs(parseInt(txAmount.value, 10)),
+        type: currentType,
+        category: txCategory.value,
+        date: txDate.value,
+        note: txNote.value.trim(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
+        txAmount.value = "";
+        txNote.value = "";
+        txDate.value = todayStr;
+      } catch (err) {
+        alert("Lỗi lưu giao dịch: " + err.message);
+      }
+    });
+
+    window.deleteTx = async function(id) {
+      if (!confirm("Xóa giao dịch này?")) return;
+      await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
+    };
+
+    filterMonth.addEventListener("change", function() {
+      renderAll();
+    });
+
+    // ==========================================
+    // 6. SỔ NỢ VNĐ
+    // ==========================================
+    function formatVND(num) {
+      const val = num ? Number(num) : 0;
+      return val.toLocaleString("vi-VN") + " ₫";
+    }
+
+    function listenToDebts() {
+      if (!currentUser) return;
+      db.collection("users").doc(currentUser.uid).collection("debts")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(function(snapshot) {
+          debts = snapshot.docs.map(function(doc) {
+            return Object.assign({ id: doc.id }, doc.data());
+          });
+          renderDebts();
+        }, function(err) {
+          console.error("Lỗi:", err);
+        });
+    }
+
+    debtForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const originalAmount = Math.abs(parseInt(debtAmount.value, 10));
+      const record = {
+        title: debtTitle.value.trim(),
+        originalAmount: originalAmount,
+        paidAmount: 0,
+        note: debtNote.value.trim(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("debts").add(record);
+        debtTitle.value = "";
+        debtAmount.value = "";
+        debtNote.value = "";
+      } catch (err) {
+        alert("Lỗi thêm nợ: " + err.message);
+      }
+    });
+
+    window.payDebt = async function(id, currentPaid, originalAmount) {
+      const remaining = originalAmount - currentPaid;
+      const input = prompt("Khoản nợ còn lại: " + formatVND(remaining) + "\nNhập số tiền VNĐ vừa trả:");
+      if (!input) return;
+
+      const payVal = parseInt(input, 10);
+      if (isNaN(payVal)) return alert("Số tiền không hợp lệ!");
+      if (payVal <= 0) return alert("Số tiền phải lớn hơn 0!");
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("debts").doc(id).update({
+          paidAmount: currentPaid + payVal
+        });
+      } catch (err) {
+        alert("Lỗi: " + err.message);
