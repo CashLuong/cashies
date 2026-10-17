@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>index</title>
+  
+  <title>Cashies - Quản Lý Tài Chính</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💴</text></svg>">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +25,7 @@
       <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
         💴
       </div>
-      <h1 class="text-xl font-bold mb-2">Quản Lý Tài Chính</h1>
+      <h1 class="text-xl font-bold mb-2">Cashies</h1>
       <p class="text-sm text-slate-500 mb-6">Đăng nhập tài khoản Google để đồng bộ dữ liệu chi tiêu cá nhân.</p>
       <button id="btnLogin" class="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition duration-150 shadow-sm">
         <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -37,18 +39,23 @@
     </div>
   </div>
 
-  <!-- Giao diện Chính (Ẩn cho đến khi đăng nhập) -->
+  <!-- Giao diện Chính -->
   <div id="appView" class="hidden max-w-xl mx-auto px-4 pt-6 space-y-5">
     
     <!-- Top Bar -->
     <header class="flex items-center justify-between pb-2 border-b border-slate-200">
       <div>
-        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Tài chính cá nhân</h2>
+        <h2 class="text-xs uppercase tracking-wider text-indigo-600 font-bold">Cashies</h2>
         <p id="userGreeting" class="font-bold text-slate-800 text-base"></p>
       </div>
-      <button id="btnLogout" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-medium transition">
-        Đăng xuất
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="btnConfigKey" title="Cài đặt Gemini API Key" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition">
+          🔑 Key
+        </button>
+        <button id="btnLogout" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-medium transition">
+          Đăng xuất
+        </button>
+      </div>
     </header>
 
     <!-- Bộ Lọc Tháng -->
@@ -57,7 +64,7 @@
       <input type="month" id="filterMonth" class="text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-slate-400">
     </div>
 
-    <!-- Tổng Quan Số Liệu -->
+    <!-- Tổng Quan Số Liệu Hàng Tháng (Yên Nhật) -->
     <section class="grid grid-cols-3 gap-2.5">
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
         <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
@@ -73,7 +80,7 @@
       </div>
     </section>
 
-    <!-- Ngân Sách Tháng (Budget Bar) -->
+    <!-- Ngân Sách Tháng -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
       <div class="flex items-center justify-between text-xs">
         <span class="font-semibold text-slate-700">Ngân sách tháng</span>
@@ -93,7 +100,7 @@
       </div>
     </section>
 
-    <!-- Form Nhập Liệu / Quét Hóa Đơn -->
+    <!-- Form Ghi Nhận Giao Dịch / Quét Hóa Đơn -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2">
         <h3 class="font-bold text-sm text-slate-800">Ghi nhận giao dịch</h3>
@@ -104,7 +111,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
-          <span id="scanStatus">Quét Hóa Đơn</span>
+          <span id="scanStatus">Quét Hóa Đơn (AI)</span>
           <input type="file" id="receiptInput" accept="image/*" class="hidden">
         </label>
       </div>
@@ -154,6 +161,41 @@
       </form>
     </section>
 
+    <!-- Sổ Nợ Việt Nam (VNĐ) -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div>
+          <h3 class="font-bold text-sm text-slate-800">Sổ Nợ (Việt Nam)</h3>
+          <p class="text-[11px] text-slate-400">Theo dõi nợ riêng bằng đơn vị VNĐ</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 font-medium">Tổng nợ còn lại</span>
+          <p id="totalRemainingDebt" class="text-sm font-bold text-rose-600">0 ₫</p>
+        </div>
+      </div>
+
+      <!-- Form Thêm Nợ -->
+      <form id="debtForm" class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+        <p class="text-xs font-semibold text-slate-600">Thêm khoản nợ mới</p>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="debtTitle" placeholder="Tên khoản nợ (vd: Vay ngân hàng)" required 
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+          <input type="number" id="debtAmount" placeholder="Số tiền nợ gốc (VNĐ)" required 
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="debtNote" placeholder="Ghi chú / Hạn trả" 
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
+            + Thêm khoản nợ
+          </button>
+        </div>
+      </form>
+
+      <!-- Danh Sách Nợ -->
+      <div id="debtList" class="space-y-2.5"></div>
+    </section>
+
     <!-- Biểu đồ tỷ lệ chi tiêu -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
       <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
@@ -162,44 +204,42 @@
       </div>
     </section>
 
-    <!-- Danh sách lịch sử giao dịch -->
+    <!-- Lịch sử giao dịch -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
       <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
-      <div id="txList" class="divide-y divide-slate-100 text-sm">
-        <!-- Render bằng JavaScript -->
-      </div>
+      <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
     </section>
 
   </div>
 
   <script>
     // ==========================================
-    // 1. CẤU HÌNH FIREBASE & CLOUD FUNCTIONS
+    // 1. CẤU HÌNH FIREBASE
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyBnGNWD5xmwexs7LZZpwX9kO1GL4QVgsKs",
-  authDomain: "cashies-828a4.firebaseapp.com",
-  projectId: "cashies-828a4",
-  storageBucket: "cashies-828a4.firebasestorage.app",
-  messagingSenderId: "951849166153",
-  appId: "1:951849166153:web:395808afb1efc8ae3e6698",
-  measurementId: "G-4YTYYJ1HVS"
+      authDomain: "cashies-828a4.firebaseapp.com",
+      projectId: "cashies-828a4",
+      storageBucket: "cashies-828a4.firebasestorage.app",
+      messagingSenderId: "951849166153",
+      appId: "1:951849166153:web:395808afb1efc8ae3e6698",
+      measurementId: "G-4YTYYJ1HVS"
     };
 
-    // Đường dẫn tới Cloud Function parseReceipt đã deploy ở bước trước
-    const CLOUD_FUNCTION_URL = "https://<REGION>-<PROJECT_ID>.cloudfunctions.net/parseReceipt";
-
-    // Khởi tạo Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    // Ép buộc lưu phiên đăng nhập
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
     // ==========================================
     // 2. BIẾN TRẠNG THÁI (STATE)
     // ==========================================
     let currentUser = null;
     let transactions = [];
-    let currentType = "expense"; // "income" hoặc "expense"
+    let debts = [];
+    let currentType = "expense";
     let monthlyBudget = 0;
     let chartInstance = null;
 
@@ -208,6 +248,7 @@
     const appView = document.getElementById("appView");
     const btnLogin = document.getElementById("btnLogin");
     const btnLogout = document.getElementById("btnLogout");
+    const btnConfigKey = document.getElementById("btnConfigKey");
     const userGreeting = document.getElementById("userGreeting");
 
     const filterMonth = document.getElementById("filterMonth");
@@ -233,21 +274,36 @@
     const receiptInput = document.getElementById("receiptInput");
     const scanStatus = document.getElementById("scanStatus");
 
-    // Khởi tạo ngày hôm nay
+    const debtForm = document.getElementById("debtForm");
+    const debtTitle = document.getElementById("debtTitle");
+    const debtAmount = document.getElementById("debtAmount");
+    const debtNote = document.getElementById("debtNote");
+    const debtList = document.getElementById("debtList");
+    const totalRemainingDebt = document.getElementById("totalRemainingDebt");
+
     const todayStr = new Date().toISOString().slice(0, 10);
-    const currentMonthStr = todayStr.slice(0, 7);
     txDate.value = todayStr;
-    filterMonth.value = currentMonthStr;
+    filterMonth.value = todayStr.slice(0, 7);
 
     // ==========================================
     // 3. XÁC THỰC NGƯỜI DÙNG (AUTH)
     // ==========================================
-    btnLogin.addEventListener("click", () => {
+    btnLogin.addEventListener("click", async () => {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => alert("Lỗi đăng nhập: " + err.message));
+      try {
+        await auth.signInWithPopup(provider);
+      } catch (err) {
+        console.warn("Popup bị chặn, chuyển sang redirect...", err);
+        if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
+          auth.signInWithRedirect(provider);
+        } else {
+          alert("Lỗi: " + err.message);
+        }
+      }
     });
 
     btnLogout.addEventListener("click", () => auth.signOut());
+    auth.getRedirectResult().catch(err => { if (err.code) alert("Lỗi: " + err.message); });
 
     auth.onAuthStateChanged(user => {
       currentUser = user;
@@ -257,6 +313,7 @@
         userGreeting.innerText = user.displayName || user.email;
         loadUserSettings();
         listenToTransactions();
+        listenToDebts();
       } else {
         loginView.classList.remove("hidden");
         appView.classList.add("hidden");
@@ -265,7 +322,7 @@
     });
 
     // ==========================================
-    // 4. CHUYỂN ĐỔI LOẠI GIAO DỊCH (THU / CHI)
+    // 4. CHUYỂN ĐỔI THU / CHI
     // ==========================================
     btnTypeExpense.addEventListener("click", () => {
       currentType = "expense";
@@ -280,7 +337,7 @@
     });
 
     // ==========================================
-    // 5. QUẢN LÝ DỮ LIỆU FIRESTORE
+    // 5. FIRESTORE GIAO DỊCH
     // ==========================================
     function listenToTransactions() {
       if (!currentUser) return;
@@ -289,7 +346,7 @@
         .onSnapshot(snapshot => {
           transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           renderAll();
-        }, err => console.error("Lỗi đọc dữ liệu:", err));
+        }, err => console.error("Lỗi:", err));
     }
 
     async function loadUserSettings() {
@@ -302,7 +359,7 @@
     }
 
     btnSetBudget.addEventListener("click", async () => {
-      const input = prompt("Nhập hạn mức chi tiêu hàng tháng (¥):", monthlyBudget || "");
+      const input = prompt("Nhập hạn mức chi tiêu tháng (¥):", monthlyBudget || "");
       if (input !== null) {
         const val = parseInt(input) || 0;
         monthlyBudget = val;
@@ -342,14 +399,118 @@
     filterMonth.addEventListener("change", () => renderAll());
 
     // ==========================================
-    // 6. TÍNH TOÁN & HIỂN THỊ
+    // 6. SỔ NỢ VNĐ
+    // ==========================================
+    function formatVND(num) {
+      return Number(num || 0).toLocaleString("vi-VN") + " ₫";
+    }
+
+    function listenToDebts() {
+      if (!currentUser) return;
+      db.collection("users").doc(currentUser.uid).collection("debts")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(snapshot => {
+          debts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderDebts();
+        }, err => console.error("Lỗi:", err));
+    }
+
+    debtForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const originalAmount = Math.abs(parseInt(debtAmount.value, 10));
+      const record = {
+        title: debtTitle.value.trim(),
+        originalAmount: originalAmount,
+        paidAmount: 0,
+        note: debtNote.value.trim(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("debts").add(record);
+        debtTitle.value = "";
+        debtAmount.value = "";
+        debtNote.value = "";
+      } catch (err) {
+        alert("Lỗi thêm nợ: " + err.message);
+      }
+    });
+
+    window.payDebt = async function(id, currentPaid, originalAmount) {
+      const remaining = originalAmount - currentPaid;
+      const input = prompt(`Khoản nợ còn lại: ${formatVND(remaining)}\nNhập số tiền VNĐ vừa trả:`);
+      if (!input) return;
+
+      const payVal = parseInt(input, 10);
+      if (isNaN(payVal) || payVal <= 0) return alert("Số tiền không hợp lệ!");
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("debts").doc(id).update({
+          paidAmount: currentPaid + payVal
+        });
+      } catch (err) {
+        alert("Lỗi: " + err.message);
+      }
+    };
+
+    window.deleteDebt = async function(id) {
+      if (!confirm("Xóa khoản nợ này?")) return;
+      await db.collection("users").doc(currentUser.uid).collection("debts").doc(id).delete();
+    };
+
+    function renderDebts() {
+      let totalRemaining = 0;
+      if (debts.length === 0) {
+        debtList.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center">Chưa có khoản nợ nào.</p>`;
+        totalRemainingDebt.innerText = "0 ₫";
+        return;
+      }
+
+      debtList.innerHTML = debts.map(d => {
+        const remaining = Math.max(0, d.originalAmount - (d.paidAmount || 0));
+        totalRemaining += remaining;
+        const progress = Math.min(100, Math.round(((d.paidAmount || 0) / d.originalAmount) * 100));
+        const isDone = remaining === 0;
+
+        return `
+          <div class="p-3 rounded-xl border ${isDone ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white border-slate-200'} space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-bold text-xs text-slate-800 ${isDone ? 'line-through text-slate-500' : ''}">${d.title}</p>
+                <p class="text-[10px] text-slate-400">${d.note || 'Không có ghi chú'} · Gốc: ${formatVND(d.originalAmount)}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs font-bold ${isDone ? 'text-emerald-600' : 'text-rose-600'}">
+                  ${isDone ? 'Đã trả xong ✓' : 'Còn: ' + formatVND(remaining)}
+                </p>
+                <span class="text-[10px] text-slate-400">Đã trả: ${formatVND(d.paidAmount || 0)} (${progress}%)</span>
+              </div>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div class="h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-indigo-600'} transition-all duration-300" style="width: ${progress}%"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-1 border-t border-slate-50">
+              ${!isDone ? `<button onclick="payDebt('${d.id}', ${d.paidAmount \vert{}\vert{} 0},${d.originalAmount})" class="text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 px-2 py-0.5 rounded transition">+ Trả bớt</button>` : ''}
+              <button onclick="deleteDebt('${d.id}')" class="text-[11px] text-slate-400 hover:text-rose-500 px-2 py-0.5 rounded transition">Xóa</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      totalRemainingDebt.innerText = formatVND(totalRemaining);
+    }
+
+    // ==========================================
+    // 7. DASHBOARD & BIỂU ĐỒ
     // ==========================================
     function formatJPY(num) {
       return "¥" + Number(num || 0).toLocaleString("ja-JP");
     }
 
     function renderAll() {
-      const selectedMonth = filterMonth.value; // YYYY-MM
+      const selectedMonth = filterMonth.value;
       const filtered = transactions.filter(t => t.date && t.date.startsWith(selectedMonth));
 
       let inc = 0;
@@ -365,20 +526,14 @@
         }
       });
 
-      // Update Dashboard
       totalIncomeEl.innerText = formatJPY(inc);
       totalExpenseEl.innerText = formatJPY(exp);
       const net = inc - exp;
       netBalanceEl.innerText = (net < 0 ? "-" : "") + formatJPY(Math.abs(net));
       netBalanceEl.className = `text-base font-bold mt-1 ${net < 0 ? "text-rose-600" : "text-slate-800"}`;
 
-      // Update Budget
       renderBudget(exp);
-
-      // Update Chart
       renderChart(catMap);
-
-      // Update History List
       renderList(filtered);
     }
 
@@ -458,13 +613,33 @@
     }
 
     // ==========================================
-    // 7. QUÉT HÓA ĐƠN BẰNG GEMINI CLOUD FUNCTION
+    // 8. QUÉT HÓA ĐƠN TRỰC TIẾP (GEMINI API)
     // ==========================================
+    btnConfigKey.addEventListener("click", () => {
+      const current = localStorage.getItem("CASHIES_GEMINI_KEY") || "";
+      const input = prompt("Nhập Gemini API Key của bạn (lấy tại aistudio.google.com):", current);
+      if (input !== null) {
+        localStorage.setItem("CASHIES_GEMINI_KEY", input.trim());
+        alert("Đã lưu API Key thành công vào máy của bạn!");
+      }
+    });
+
     receiptInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
-      if (!file || !currentUser) return;
+      if (!file) return;
 
-      scanStatus.innerText = "Đang đọc ảnh...";
+      // Lấy Gemini API Key từ máy
+      let apiKey = localStorage.getItem("CASHIES_GEMINI_KEY");
+      if (!apiKey) {
+        apiKey = prompt("Vui lòng nhập Gemini API Key của bạn để quét hóa đơn:");
+        if (!apiKey) {
+          receiptInput.value = "";
+          return;
+        }
+        localStorage.setItem("CASHIES_GEMINI_KEY", apiKey.trim());
+      }
+
+      scanStatus.innerText = "Đang phân tích...";
       
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -472,36 +647,65 @@
         try {
           const dataUrl = reader.result;
           const mimeType = dataUrl.split(";")[0].split(":")[1];
-          const imageBase64 = dataUrl.split(",")[1];
+          const base64Data = dataUrl.split(",")[1];
 
-          const token = await currentUser.getIdToken();
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-          const res = await fetch(CLOUD_FUNCTION_URL, {
+          const payload = {
+            contents: [{
+              parts: [
+                {
+                  text: `Phân tích hóa đơn này và trả về kết quả đúng định dạng JSON thuần (không dùng markdown hay code block):
+{
+  "amount": number (tổng số tiền thanh toán cuối cùng),
+  "category": string ("Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc", hoặc "Khác"),
+  "date": string (YYYY-MM-DD, nếu không thấy thì để "${todayStr}"),
+  "note": string (tên cửa hàng và món chính ngắn gọn)
+}`
+                },
+                {
+                  inlineData: {
+                    mimeType: mimeType,
+                    data: base64Data
+                  }
+                }
+              ]
+            }],
+            generationConfig: {
+              responseMimeType: "application/json"
+            }
+          };
+
+          const res = await fetch(endpoint, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ imageBase64, mimeType })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
           });
 
-          if (!res.ok) throw new Error("Lỗi mạng hoặc server");
-          const data = await res.json();
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error?.message || "Lỗi gọi Gemini API");
+          }
 
-          // Điền dữ liệu bóc tách được vào Form
-          if (data.amount) txAmount.value = data.amount;
-          if (data.date) txDate.value = data.date;
-          if (data.note) txNote.value = data.note;
-          if (data.category) txCategory.value = data.category;
+          const resData = await res.json();
+          const textResponse = resData.candidates[0].content.parts[0].text;
+          const parsed = JSON.parse(textResponse);
 
-          // Chuyển chế độ sang Chi tiêu vì là hóa đơn
+          // Tự điền vào form
+          if (parsed.amount) txAmount.value = parsed.amount;
+          if (parsed.date) txDate.value = parsed.date;
+          if (parsed.note) txNote.value = parsed.note;
+          if (parsed.category) txCategory.value = parsed.category;
+
           btnTypeExpense.click();
-          scanStatus.innerText = "Quét Hóa Đơn";
-          alert("Đã trích xuất xong hóa đơn! Hãy kiểm tra lại thông tin trước khi nhấn Lưu.");
+          scanStatus.innerText = "Quét Hóa Đơn (AI)";
+          alert("Đã đọc xong hóa đơn! Hãy kiểm tra lại thông tin rồi bấm Lưu Giao Dịch.");
         } catch (err) {
-          console.error(err);
-          alert("Không thể quét hóa đơn. Vui lòng thử lại hoặc nhập tay.");
-          scanStatus.innerText = "Quét Hóa Đơn";
+          console.error("Lỗi:", err);
+          alert("Lỗi quét hóa đơn: " + err.message);
+          scanStatus.innerText = "Quét Hóa Đơn (AI)";
+        } finally {
+          receiptInput.value = "";
         }
       };
     });
