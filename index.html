@@ -747,6 +747,40 @@
       }
     });
 
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          const msg = (errData.error && errData.error.message) ? errData.error.message : "Lỗi gọi Gemini API";
+          throw new Error(msg);
+        }
+
+        const resData = await res.json();
+        let textResponse = resData.candidates[0].content.parts[0].text;
+        textResponse = textResponse.replace(/```json|```/g, "").trim();
+        const parsed = JSON.parse(textResponse);
+
+        if (parsed.amount) txAmount.value = parsed.amount;
+        if (parsed.date) txDate.value = parsed.date;
+        if (parsed.note) txNote.value = parsed.note;
+        if (parsed.category) txCategory.value = parsed.category;
+
+        btnTypeExpense.click();
+        scanStatus.innerText = "Quét Hóa Đơn (AI)";
+        alert("Đã đọc xong hóa đơn! Hãy kiểm tra lại thông tin rồi bấm Lưu Giao Dịch.");
+      } catch (err) {
+        console.error("Lỗi:", err);
+        alert("Lỗi quét hóa đơn: " + err.message);
+        scanStatus.innerText = "Quét Hóa Đơn (AI)";
+      } finally {
+        receiptInput.value = "";
+      }
+    });
+
           if (!res.ok) {
             const errData = await res.json();
             throw new Error(errData.error?.message || "Lỗi gọi Gemini API");
