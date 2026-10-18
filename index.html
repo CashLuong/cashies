@@ -62,13 +62,13 @@
       </div>
     </header>
 
-    <!-- Bộ Lọc Tháng -->
+    <!-- 1. THÁNG HIỂN THỊ -->
     <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
       <span class="text-xs font-semibold text-slate-500 uppercase">Tháng hiển thị</span>
       <input type="month" id="filterMonth" class="text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-slate-400">
     </div>
 
-    <!-- Tổng Quan Số Liệu Hàng Tháng (Yên Nhật) -->
+    <!-- 2. TỔNG THU - CHI, SỐ DƯ -->
     <section class="grid grid-cols-3 gap-2.5">
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
         <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
@@ -78,51 +78,13 @@
         <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
         <p id="totalExpense" class="text-base font-bold text-rose-600 mt-1">¥0</p>
       </div>
-      <!-- Ô Số Dư có tính năng bấm để chỉnh sửa trực tiếp -->
-      <div id="btnEditBalance" title="Bấm để điều chỉnh số dư thực tế" class="bg-white p-3.5 rounded-2xl border border-indigo-200 hover:border-indigo-400 cursor-pointer shadow-xs transition group">
-        <div class="flex items-center justify-between">
-          <p class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
-          <span class="text-[10px] text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded font-semibold">✎ Sửa</span>
-        </div>
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs text-slate-400 font-medium">Số Dư</p>
         <p id="netBalance" class="text-base font-bold text-slate-800 mt-1">¥0</p>
       </div>
     </section>
 
-    <!-- Ngân Sách Tháng & Ngân Sách Từng Danh Mục -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-      <!-- Ngân sách tổng -->
-      <div class="space-y-2">
-        <div class="flex items-center justify-between text-xs">
-          <span class="font-bold text-slate-800">Tổng ngân sách tháng</span>
-          <div class="flex items-center gap-1">
-            <span class="text-slate-400">Trần tổng:</span>
-            <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
-              <span id="budgetDisplay">¥0</span> ✎
-            </button>
-          </div>
-        </div>
-        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-          <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-        </div>
-        <div class="flex justify-between text-[11px] text-slate-400">
-          <span id="budgetStatus">Chưa đặt hạn mức</span>
-          <span id="budgetPercent">0%</span>
-        </div>
-      </div>
-
-      <!-- Phân bổ ngân sách theo từng loại chi tiêu -->
-      <div class="pt-3 border-t border-slate-100 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-700">Hạn mức theo danh mục</span>
-          <span class="text-[10px] text-slate-400">Chạm vào từng mục để đặt trần</span>
-        </div>
-        <div id="categoryBudgetList" class="space-y-2.5">
-          <!-- Render tự động bằng JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Form Ghi Nhận Giao Dịch / Quét Hóa Đơn -->
+    <!-- 3. GHI NHẬN GIAO DỊCH -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2">
         <h3 class="font-bold text-sm text-slate-800">Ghi nhận giao dịch</h3>
@@ -164,7 +126,6 @@
               <option value="Nhà cửa & Hóa đơn">Nhà cửa & Hóa đơn</option>
               <option value="Học tập / Công việc">Học tập / Công việc</option>
               <option value="Lương">Lương</option>
-              <option value="Điều chỉnh số dư">Điều chỉnh số dư</option>
               <option value="Khác">Khác</option>
             </select>
           </div>
@@ -180,7 +141,21 @@
       </form>
     </section>
 
-    <!-- Sổ Nợ Việt Nam (VNĐ) -->
+    <!-- 4. LỊCH SỬ GIAO DỊCH -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+      <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
+      <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
+    </section>
+
+    <!-- 5. TỶ LỆ CHI TIÊU THÁNG -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+      <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
+      <div class="h-48 flex items-center justify-center">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </section>
+
+    <!-- 6. SỔ NỢ -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2">
         <div>
@@ -213,18 +188,24 @@
       <div id="debtList" class="space-y-2.5"></div>
     </section>
 
-    <!-- Biểu đồ tỷ lệ chi tiêu -->
+    <!-- 7. TỔNG NGÂN SÁCH THÁNG -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-      <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
-      <div class="h-48 flex items-center justify-center">
-        <canvas id="categoryChart"></canvas>
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-semibold text-slate-700">Ngân sách tháng</span>
+        <div class="flex items-center gap-1">
+          <span class="text-slate-400">Trần:</span>
+          <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
+            <span id="budgetDisplay">¥0</span>
+          </button>
+        </div>
       </div>
-    </section>
-
-    <!-- Lịch sử giao dịch -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-      <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
-      <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
+      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+        <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+      </div>
+      <div class="flex justify-between text-[11px] text-slate-400">
+        <span id="budgetStatus">Chưa đặt hạn mức</span>
+        <span id="budgetPercent">0%</span>
+      </div>
     </section>
 
   </div>
@@ -254,28 +235,14 @@
     // ==========================================
     // 2. BIẾN TRẠNG THÁI (STATE)
     // ==========================================
-    const EXPENSE_CATEGORIES = [
-      "Ăn uống",
-      "Mua sắm",
-      "Đi lại",
-      "Nhà cửa & Hóa đơn",
-      "Học tập / Công việc",
-      "Khác"
-    ];
-
     let currentUser = null;
     let transactions = [];
     let debts = [];
     let currentType = "expense";
     let monthlyBudget = 0;
-    let categoryBudgets = {}; // Lưu hạn mức từng danh mục: { "Ăn uống": 30000, ... }
     let chartInstance = null;
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
-    let currentMonthNet = 0;
-    let currentMonthIncome = 0;
-    let currentMonthExpense = 0;
-    let currentCatMap = {};
 
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
@@ -290,14 +257,12 @@
     const totalIncomeEl = document.getElementById("totalIncome");
     const totalExpenseEl = document.getElementById("totalExpense");
     const netBalanceEl = document.getElementById("netBalance");
-    const btnEditBalance = document.getElementById("btnEditBalance");
 
     const budgetDisplay = document.getElementById("budgetDisplay");
     const btnSetBudget = document.getElementById("btnSetBudget");
     const budgetProgress = document.getElementById("budgetProgress");
     const budgetStatus = document.getElementById("budgetStatus");
     const budgetPercent = document.getElementById("budgetPercent");
-    const categoryBudgetList = document.getElementById("categoryBudgetList");
 
     const btnTypeExpense = document.getElementById("btnTypeExpense");
     const btnTypeIncome = document.getElementById("btnTypeIncome");
@@ -325,7 +290,7 @@
     filterMonth.value = todayStr.slice(0, 7);
 
     if (appStatus) {
-      appStatus.innerText = "Sẵn sàng kết nối ✓";
+      appStatus.innerText = "Hệ thống đã sẵn sàng ✓";
     }
 
     // ==========================================
@@ -336,6 +301,7 @@
       try {
         await auth.signInWithPopup(provider);
       } catch (err) {
+        console.warn("Popup error:", err);
         if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
           auth.signInWithRedirect(provider);
         } else {
@@ -388,7 +354,7 @@
     });
 
     // ==========================================
-    // 5. FIRESTORE GIAO DỊCH, NGÂN SÁCH & SỐ DƯ
+    // 5. FIRESTORE GIAO DỊCH
     // ==========================================
     function listenToTransactions() {
       if (!currentUser) return;
@@ -400,164 +366,38 @@
           });
           if (syncBadge) {
             syncBadge.innerText = "Đã đồng bộ (" + transactions.length + ")";
-            syncBadge.className = "text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium";
           }
           renderAll();
         }, function(err) {
-          console.error("Lỗi Firestore:", err);
+          console.error("Lỗi:", err);
           if (syncBadge) {
             syncBadge.innerText = "Lỗi đồng bộ!";
             syncBadge.className = "text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium";
           }
-          alert("Không thể đồng bộ dữ liệu với đám mây: " + err.message);
         });
     }
 
     async function loadUserSettings() {
       if (!currentUser) return;
-      try {
-        const doc = await db.collection("users").doc(currentUser.uid).get();
-        if (doc.exists) {
-          const data = doc.data();
-          if (data.monthlyBudget !== undefined) {
-            monthlyBudget = Number(data.monthlyBudget) || 0;
-          }
-          if (data.categoryBudgets) {
-            categoryBudgets = data.categoryBudgets;
-          }
-        }
-        renderAll();
-      } catch (e) {
-        console.warn("Chưa có cài đặt:", e);
+      const doc = await db.collection("users").doc(currentUser.uid).get();
+      if (doc.exists && doc.data().monthlyBudget) {
+        monthlyBudget = doc.data().monthlyBudget;
       }
+      renderBudget(0);
     }
 
-    // Đặt tổng ngân sách tháng
     btnSetBudget.addEventListener("click", async function() {
       const defaultVal = monthlyBudget ? String(monthlyBudget) : "";
-      const input = prompt("Nhập tổng hạn mức chi tiêu tháng (¥):", defaultVal);
+      const input = prompt("Nhập hạn mức chi tiêu tháng (¥):", defaultVal);
       if (input !== null) {
-        const parsed = parseInt(input.replace(/,/g, "").trim(), 10);
-        const val = isNaN(parsed) ? 0 : Math.max(0, parsed);
+        const parsed = parseInt(input, 10);
+        const val = isNaN(parsed) ? 0 : parsed;
         monthlyBudget = val;
         await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
         renderAll();
       }
     });
 
-    // Đặt ngân sách cho từng danh mục chi tiêu
-    window.setCategoryBudget = async function(catName) {
-      if (!currentUser) return;
-      const currentVal = categoryBudgets[catName] ? String(categoryBudgets[catName]) : "";
-      const input = prompt('Nhập hạn mức tháng cho danh mục "' + catName + '" (¥):\n(Nhập 0 để xóa hạn mức)', currentVal);
-      if (input === null) return;
-
-      const parsed = parseInt(input.replace(/,/g, "").trim(), 10);
-      const val = isNaN(parsed) ? 0 : Math.max(0, parsed);
-
-      categoryBudgets[catName] = val;
-
-      // Tính tổng các danh mục đã đặt
-      let sumCatBudgets = 0;
-      Object.keys(categoryBudgets).forEach(function(k) {
-        sumCatBudgets += Number(categoryBudgets[k] || 0);
-      });
-
-      const updatePayload = { categoryBudgets: categoryBudgets };
-
-      // Nếu tổng ngân sách tháng đang = 0 hoặc nhỏ hơn tổng các danh mục, hỏi người dùng có muốn đồng bộ lên không
-      if (sumCatBudgets > monthlyBudget) {
-        const autoSync = confirm(
-          "Tổng hạn mức các danh mục (" + formatJPY(sumCatBudgets) + ") đang lớn hơn Tổng ngân sách tháng hiện tại (" + formatJPY(monthlyBudget) + ").\n\n" +
-          "Bạn có muốn cập nhật Tổng ngân sách tháng thành " + formatJPY(sumCatBudgets) + " luôn không?"
-        );
-        if (autoSync) {
-          monthlyBudget = sumCatBudgets;
-          updatePayload.monthlyBudget = sumCatBudgets;
-        }
-      }
-
-      try {
-        await db.collection("users").doc(currentUser.uid).set(updatePayload, { merge: true });
-        renderAll();
-      } catch (err) {
-        alert("Lỗi lưu hạn mức danh mục: " + err.message);
-      }
-    };
-
-    // Chỉnh sửa Số Dư trực tiếp
-    btnEditBalance.addEventListener("click", async function() {
-      if (!currentUser) return;
-
-      const input = prompt(
-        "Số dư trên sổ hiện tại: " + formatJPY(currentMonthNet) + "\nNhập Số Dư thực tế trong ví/tài khoản của bạn (¥):",
-        String(currentMonthNet)
-      );
-
-      if (input === null) return;
-      const targetBalance = parseInt(input.replace(/,/g, "").trim(), 10);
-      if (isNaN(targetBalance)) {
-        alert("Số tiền nhập vào không hợp lệ!");
-        return;
-      }
-
-      const diff = targetBalance - currentMonthNet;
-      if (diff === 0) {
-        alert("Số dư thực tế đã khớp hoàn toàn!");
-        return;
-      }
-
-      const selectedMonth = filterMonth.value;
-      const adjustDate = todayStr.startsWith(selectedMonth) ? todayStr : (selectedMonth + "-01");
-
-      let record = null;
-
-      if (diff > 0) {
-        record = {
-          amount: diff,
-          type: "income",
-          category: "Điều chỉnh số dư",
-          date: adjustDate,
-          note: "Cập nhật tăng số dư thực tế (+" + formatJPY(diff) + ")",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-      } else {
-        const absDiff = Math.abs(diff);
-        const addAsExpense = confirm(
-          "Số dư thực tế ít hơn sổ sách " + formatJPY(absDiff) + ".\n\n" +
-          "• Bấm OK: Ghi nhận khoản hụt này vào TỔNG CHI (Chi tiêu quên ghi/không hóa đơn).\n" +
-          "• Bấm Cancel (Hủy): Trừ trực tiếp vào TỔNG THU."
-        );
-
-        if (addAsExpense) {
-          record = {
-            amount: absDiff,
-            type: "expense",
-            category: "Điều chỉnh số dư",
-            date: adjustDate,
-            note: "Chi tiêu quên ghi / Khớp số dư (-" + formatJPY(absDiff) + ")",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          };
-        } else {
-          record = {
-            amount: -absDiff,
-            type: "income",
-            category: "Điều chỉnh số dư",
-            date: adjustDate,
-            note: "Điều chỉnh giảm Tổng Thu (-" + formatJPY(absDiff) + ")",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          };
-        }
-      }
-
-      try {
-        await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
-      } catch (err) {
-        alert("Lỗi khi cập nhật số dư: " + err.message);
-      }
-    });
-
-    // Lưu giao dịch mới
     txForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       if (!currentUser) return;
@@ -628,7 +468,7 @@
           });
           renderDebts();
         }, function(err) {
-          console.error("Lỗi đọc nợ:", err);
+          console.error("Lỗi:", err);
         });
     }
 
@@ -669,8 +509,9 @@
       const input = prompt("Khoản nợ còn lại: " + formatVND(remaining) + "\nNhập số tiền VNĐ vừa trả:");
       if (!input) return;
 
-      const payVal = parseInt(input.replace(/,/g, "").trim(), 10);
-      if (isNaN(payVal) || payVal <= 0) return alert("Số tiền không hợp lệ!");
+      const payVal = parseInt(input, 10);
+      if (isNaN(payVal)) return alert("Số tiền không hợp lệ!");
+      if (payVal <= 0) return alert("Số tiền phải lớn hơn 0!");
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("debts").doc(id).update({
@@ -735,7 +576,7 @@
     }
 
     // ==========================================
-    // 7. DASHBOARD, NGÂN SÁCH DANH MỤC & BIỂU ĐỒ
+    // 7. DASHBOARD & BIỂU ĐỒ
     // ==========================================
     function formatJPY(num) {
       const val = num ? Number(num) : 0;
@@ -753,30 +594,22 @@
       const catMap = {};
 
       filtered.forEach(function(t) {
-        const amt = Number(t.amount);
         if (t.type === "income") {
-          inc += amt;
+          inc += t.amount;
         } else {
-          exp += amt;
-          if (amt > 0) {
-            const prev = catMap[t.category] ? catMap[t.category] : 0;
-            catMap[t.category] = prev + amt;
-          }
+          exp += t.amount;
+          const prev = catMap[t.category] ? catMap[t.category] : 0;
+          catMap[t.category] = prev + t.amount;
         }
       });
 
-      currentMonthIncome = inc;
-      currentMonthExpense = exp;
-      currentMonthNet = inc - exp;
-      currentCatMap = catMap;
-
-      totalIncomeEl.innerText = (inc < 0 ? "-" : "") + formatJPY(Math.abs(inc));
+      totalIncomeEl.innerText = formatJPY(inc);
       totalExpenseEl.innerText = formatJPY(exp);
-      netBalanceEl.innerText = (currentMonthNet < 0 ? "-" : "") + formatJPY(Math.abs(currentMonthNet));
-      netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
+      const net = inc - exp;
+      netBalanceEl.innerText = (net < 0 ? "-" : "") + formatJPY(Math.abs(net));
+      netBalanceEl.className = "text-base font-bold mt-1 " + (net < 0 ? "text-rose-600" : "text-slate-800");
 
       renderBudget(exp);
-      renderCategoryBudgets(catMap);
       renderChart(catMap);
       renderList(filtered);
     }
@@ -786,79 +619,22 @@
       budgetDisplay.innerText = formatJPY(monthlyBudget);
       if (monthlyBudget <= 0) {
         budgetProgress.style.width = "0%";
-        budgetStatus.innerText = "Chưa đặt ngân sách tổng";
+        budgetStatus.innerText = "Chưa đặt ngân sách";
         budgetPercent.innerText = "0%";
         return;
       }
 
-      const rawPercent = Math.round((expVal / monthlyBudget) * 100);
-      const widthPercent = Math.min(rawPercent, 100);
-      budgetPercent.innerText = rawPercent + "%";
-      budgetProgress.style.width = widthPercent + "%";
+      const percent = Math.min(Math.round((expVal / monthlyBudget) * 100), 100);
+      budgetPercent.innerText = percent + "%";
+      budgetProgress.style.width = percent + "%";
 
       if (expVal > monthlyBudget) {
         budgetProgress.className = "h-2.5 rounded-full bg-rose-500 transition-all duration-300";
         budgetStatus.innerText = "Vượt ngân sách: " + formatJPY(expVal - monthlyBudget);
-      } else if (rawPercent >= 80) {
-        budgetProgress.className = "h-2.5 rounded-full bg-amber-500 transition-all duration-300";
-        budgetStatus.innerText = "Sắp chạm trần · Còn: " + formatJPY(monthlyBudget - expVal);
       } else {
         budgetProgress.className = "h-2.5 rounded-full bg-emerald-500 transition-all duration-300";
         budgetStatus.innerText = "Còn lại: " + formatJPY(monthlyBudget - expVal);
       }
-    }
-
-    function renderCategoryBudgets(catMap) {
-      categoryBudgetList.innerHTML = EXPENSE_CATEGORIES.map(function(cat) {
-        const spent = catMap[cat] ? Number(catMap[cat]) : 0;
-        const limit = categoryBudgets[cat] ? Number(categoryBudgets[cat]) : 0;
-
-        if (limit <= 0) {
-          return '<div onclick="setCategoryBudget(\'' + cat + '\')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/70 cursor-pointer transition flex items-center justify-between">' +
-            '<div class="flex items-center gap-2">' +
-              '<span class="text-xs font-semibold text-slate-700">' + cat + '</span>' +
-              '<span class="text-[11px] text-slate-400">Đã chi: ' + formatJPY(spent) + '</span>' +
-            '</div>' +
-            '<span class="text-[11px] text-indigo-600 font-semibold">+ Đặt hạn mức</span>' +
-          '</div>';
-        }
-
-        const rawPercent = Math.round((spent / limit) * 100);
-        const barWidth = Math.min(rawPercent, 100);
-        const isOver = spent > limit;
-        const isWarn = !isOver && rawPercent >= 80;
-
-        let barColor = "bg-emerald-500";
-        let statusText = "Còn " + formatJPY(limit - spent);
-        let statusClass = "text-slate-400";
-
-        if (isOver) {
-          barColor = "bg-rose-500";
-          statusText = "Vượt " + formatJPY(spent - limit);
-          statusClass = "text-rose-600 font-semibold";
-        } else if (isWarn) {
-          barColor = "bg-amber-500";
-          statusText = "Còn " + formatJPY(limit - spent);
-          statusClass = "text-amber-600 font-medium";
-        }
-
-        return '<div onclick="setCategoryBudget(\'' + cat + '\')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 cursor-pointer transition space-y-1.5">' +
-          '<div class="flex items-center justify-between text-xs">' +
-            '<span class="font-semibold text-slate-800">' + cat + '</span>' +
-            '<div class="flex items-center gap-1.5">' +
-              '<span class="font-bold text-slate-700">' + formatJPY(spent) + '</span>' +
-              '<span class="text-slate-400">/ ' + formatJPY(limit) + ' ✎</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">' +
-            '<div class="h-1.5 rounded-full ' + barColor + ' transition-all duration-300" style="width: ' + barWidth + '%"></div>' +
-          '</div>' +
-          '<div class="flex justify-between text-[10px]">' +
-            '<span class="' + statusClass + '">' + statusText + '</span>' +
-            '<span class="text-slate-400">' + rawPercent + '%</span>' +
-          '</div>' +
-        '</div>';
-      }).join("");
     }
 
     function renderChart(catMap) {
@@ -881,7 +657,7 @@
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#64748B", "#0EA5E9"]
+            backgroundColor: ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#64748B"]
           }]
         },
         options: {
@@ -902,19 +678,8 @@
 
       txList.innerHTML = list.map(function(t) {
         const noteSpan = t.note ? '<span class="font-normal text-slate-400"> · ' + t.note + '</span>' : "";
-        const amt = Number(t.amount);
-        let amountClass = "text-slate-800";
-        let sign = "-";
-
-        if (t.type === "income") {
-          if (amt >= 0) {
-            amountClass = "text-emerald-600";
-            sign = "+";
-          } else {
-            amountClass = "text-amber-600";
-            sign = "-";
-          }
-        }
+        const amountClass = t.type === "income" ? "text-emerald-600" : "text-slate-800";
+        const sign = t.type === "income" ? "+" : "-";
 
         return '<div class="py-2.5 flex items-center justify-between">' +
           '<div>' +
@@ -922,7 +687,7 @@
             '<p class="text-[11px] text-slate-400 mt-0.5">' + t.date + '</p>' +
           '</div>' +
           '<div class="flex items-center gap-2">' +
-            '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(Math.abs(amt)) + '</span>' +
+            '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(t.amount) + '</span>' +
             '<button onclick="deleteTx(\'' + t.id + '\')" class="text-slate-300 hover:text-rose-500 text-xs px-1">✕</button>' +
           '</div>' +
         '</div>';
