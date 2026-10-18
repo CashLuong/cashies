@@ -88,23 +88,37 @@
       </div>
     </section>
 
-    <!-- Ngân Sách Tháng -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-      <div class="flex items-center justify-between text-xs">
-        <span class="font-semibold text-slate-700">Ngân sách tháng</span>
-        <div class="flex items-center gap-1">
-          <span class="text-slate-400">Trần:</span>
-          <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
-            <span id="budgetDisplay">¥0</span>
-          </button>
+    <!-- Ngân Sách Tháng & Ngân Sách Từng Danh Mục -->
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+      <!-- Ngân sách tổng -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-800">Tổng ngân sách tháng</span>
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400">Trần tổng:</span>
+            <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
+              <span id="budgetDisplay">¥0</span> ✎
+            </button>
+          </div>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+          <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400">
+          <span id="budgetStatus">Chưa đặt hạn mức</span>
+          <span id="budgetPercent">0%</span>
         </div>
       </div>
-      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-        <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-      </div>
-      <div class="flex justify-between text-[11px] text-slate-400">
-        <span id="budgetStatus">Chưa đặt hạn mức</span>
-        <span id="budgetPercent">0%</span>
+
+      <!-- Phân bổ ngân sách theo từng loại chi tiêu -->
+      <div class="pt-3 border-t border-slate-100 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-700">Hạn mức theo danh mục</span>
+          <span class="text-[10px] text-slate-400">Chạm vào từng mục để đặt trần</span>
+        </div>
+        <div id="categoryBudgetList" class="space-y-2.5">
+          <!-- Render tự động bằng JS -->
+        </div>
       </div>
     </section>
 
@@ -240,17 +254,28 @@
     // ==========================================
     // 2. BIẾN TRẠNG THÁI (STATE)
     // ==========================================
+    const EXPENSE_CATEGORIES = [
+      "Ăn uống",
+      "Mua sắm",
+      "Đi lại",
+      "Nhà cửa & Hóa đơn",
+      "Học tập / Công việc",
+      "Khác"
+    ];
+
     let currentUser = null;
     let transactions = [];
     let debts = [];
     let currentType = "expense";
     let monthlyBudget = 0;
+    let categoryBudgets = {}; // Lưu hạn mức từng danh mục: { "Ăn uống": 30000, ... }
     let chartInstance = null;
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
     let currentMonthNet = 0;
     let currentMonthIncome = 0;
     let currentMonthExpense = 0;
+    let currentCatMap = {};
 
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
@@ -272,6 +297,7 @@
     const budgetProgress = document.getElementById("budgetProgress");
     const budgetStatus = document.getElementById("budgetStatus");
     const budgetPercent = document.getElementById("budgetPercent");
+    const categoryBudgetList = document.getElementById("categoryBudgetList");
 
     const btnTypeExpense = document.getElementById("btnTypeExpense");
     const btnTypeIncome = document.getElementById("btnTypeIncome");
@@ -303,16 +329,14 @@
     }
 
     // ==========================================
-    // 3. XÁC THỰC NGƯỜNG DÙNG (AUTH)
+    // 3. XÁC THỰC NGƯỜI DÙNG (AUTH)
     // ==========================================
     btnLogin.addEventListener("click", async function() {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         await auth.signInWithPopup(provider);
       } catch (err) {
-        if (err.code === "auth/popup-blocked") {
-          auth.signInWithRedirect(provider);
-        } else if (err.code === "auth/popup-closed-by-user") {
+        if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
           auth.signInWithRedirect(provider);
         } else {
           alert("Lỗi đăng nhập: " + err.message);
@@ -364,7 +388,7 @@
     });
 
     // ==========================================
-    // 5. FIRESTORE GIAO DỊCH & CHỈNH SỬA SỐ DƯ
+    // 5. FIRESTORE GIAO DỊCH, NGÂN SÁCH & SỐ DƯ
     // ==========================================
     function listenToTransactions() {
       if (!currentUser) return;
@@ -385,7 +409,7 @@
             syncBadge.innerText = "Lỗi đồng bộ!";
             syncBadge.className = "text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium";
           }
-          alert("Không thể đồng bộ dữ liệu với đám mây. Hãy kiểm tra lại Firestore Security Rules trong Firebase Console: " + err.message);
+          alert("Không thể đồng bộ dữ liệu với đám mây: " + err.message);
         });
     }
 
@@ -393,28 +417,75 @@
       if (!currentUser) return;
       try {
         const doc = await db.collection("users").doc(currentUser.uid).get();
-        if (doc.exists && doc.data().monthlyBudget) {
-          monthlyBudget = doc.data().monthlyBudget;
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.monthlyBudget !== undefined) {
+            monthlyBudget = Number(data.monthlyBudget) || 0;
+          }
+          if (data.categoryBudgets) {
+            categoryBudgets = data.categoryBudgets;
+          }
         }
-        renderBudget(currentMonthExpense);
+        renderAll();
       } catch (e) {
         console.warn("Chưa có cài đặt:", e);
       }
     }
 
+    // Đặt tổng ngân sách tháng
     btnSetBudget.addEventListener("click", async function() {
       const defaultVal = monthlyBudget ? String(monthlyBudget) : "";
-      const input = prompt("Nhập hạn mức chi tiêu tháng (¥):", defaultVal);
+      const input = prompt("Nhập tổng hạn mức chi tiêu tháng (¥):", defaultVal);
       if (input !== null) {
-        const parsed = parseInt(input, 10);
-        const val = isNaN(parsed) ? 0 : parsed;
+        const parsed = parseInt(input.replace(/,/g, "").trim(), 10);
+        const val = isNaN(parsed) ? 0 : Math.max(0, parsed);
         monthlyBudget = val;
         await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
         renderAll();
       }
     });
 
-    // TÍNH NĂNG MỚI: CHỈNH SỬA SỐ DƯ TRỰC TIẾP
+    // Đặt ngân sách cho từng danh mục chi tiêu
+    window.setCategoryBudget = async function(catName) {
+      if (!currentUser) return;
+      const currentVal = categoryBudgets[catName] ? String(categoryBudgets[catName]) : "";
+      const input = prompt('Nhập hạn mức tháng cho danh mục "' + catName + '" (¥):\n(Nhập 0 để xóa hạn mức)', currentVal);
+      if (input === null) return;
+
+      const parsed = parseInt(input.replace(/,/g, "").trim(), 10);
+      const val = isNaN(parsed) ? 0 : Math.max(0, parsed);
+
+      categoryBudgets[catName] = val;
+
+      // Tính tổng các danh mục đã đặt
+      let sumCatBudgets = 0;
+      Object.keys(categoryBudgets).forEach(function(k) {
+        sumCatBudgets += Number(categoryBudgets[k] || 0);
+      });
+
+      const updatePayload = { categoryBudgets: categoryBudgets };
+
+      // Nếu tổng ngân sách tháng đang = 0 hoặc nhỏ hơn tổng các danh mục, hỏi người dùng có muốn đồng bộ lên không
+      if (sumCatBudgets > monthlyBudget) {
+        const autoSync = confirm(
+          "Tổng hạn mức các danh mục (" + formatJPY(sumCatBudgets) + ") đang lớn hơn Tổng ngân sách tháng hiện tại (" + formatJPY(monthlyBudget) + ").\n\n" +
+          "Bạn có muốn cập nhật Tổng ngân sách tháng thành " + formatJPY(sumCatBudgets) + " luôn không?"
+        );
+        if (autoSync) {
+          monthlyBudget = sumCatBudgets;
+          updatePayload.monthlyBudget = sumCatBudgets;
+        }
+      }
+
+      try {
+        await db.collection("users").doc(currentUser.uid).set(updatePayload, { merge: true });
+        renderAll();
+      } catch (err) {
+        alert("Lỗi lưu hạn mức danh mục: " + err.message);
+      }
+    };
+
+    // Chỉnh sửa Số Dư trực tiếp
     btnEditBalance.addEventListener("click", async function() {
       if (!currentUser) return;
 
@@ -436,14 +507,12 @@
         return;
       }
 
-      // Ngày ghi nhận điều chỉnh: nếu đang ở tháng hiện tại thì lấy hôm nay, nếu tháng khác thì lấy ngày 01 của tháng đó
       const selectedMonth = filterMonth.value;
       const adjustDate = todayStr.startsWith(selectedMonth) ? todayStr : (selectedMonth + "-01");
 
       let record = null;
 
       if (diff > 0) {
-        // Số dư thực tế lớn hơn -> Tăng Tổng Thu
         record = {
           amount: diff,
           type: "income",
@@ -453,7 +522,6 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
       } else {
-        // Số dư thực tế nhỏ hơn (diff < 0) -> Hỏi người dùng muốn tăng Chi tiêu quên ghi hay giảm trực tiếp Tổng Thu
         const absDiff = Math.abs(diff);
         const addAsExpense = confirm(
           "Số dư thực tế ít hơn sổ sách " + formatJPY(absDiff) + ".\n\n" +
@@ -471,7 +539,6 @@
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           };
         } else {
-          // Trừ trực tiếp vào Tổng Thu bằng khoản income âm
           record = {
             amount: -absDiff,
             type: "income",
@@ -490,7 +557,7 @@
       }
     });
 
-    // Lưu giao dịch mới (Có khóa chống bấm đúp trên iOS)
+    // Lưu giao dịch mới
     txForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       if (!currentUser) return;
@@ -519,7 +586,6 @@
         txAmount.value = "";
         txNote.value = "";
         
-        // Nếu ngày của hóa đơn thuộc tháng khác, tự động chuyển bộ lọc sang tháng đó để thấy ngay
         const txMonth = chosenDate.slice(0, 7);
         if (filterMonth.value !== txMonth) {
           filterMonth.value = txMonth;
@@ -604,8 +670,7 @@
       if (!input) return;
 
       const payVal = parseInt(input.replace(/,/g, "").trim(), 10);
-      if (isNaN(payVal)) return alert("Số tiền không hợp lệ!");
-      if (payVal <= 0) return alert("Số tiền phải lớn hơn 0!");
+      if (isNaN(payVal) || payVal <= 0) return alert("Số tiền không hợp lệ!");
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("debts").doc(id).update({
@@ -670,7 +735,7 @@
     }
 
     // ==========================================
-    // 7. DASHBOARD & BIỂU ĐỒ
+    // 7. DASHBOARD, NGÂN SÁCH DANH MỤC & BIỂU ĐỒ
     // ==========================================
     function formatJPY(num) {
       const val = num ? Number(num) : 0;
@@ -703,6 +768,7 @@
       currentMonthIncome = inc;
       currentMonthExpense = exp;
       currentMonthNet = inc - exp;
+      currentCatMap = catMap;
 
       totalIncomeEl.innerText = (inc < 0 ? "-" : "") + formatJPY(Math.abs(inc));
       totalExpenseEl.innerText = formatJPY(exp);
@@ -710,6 +776,7 @@
       netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
 
       renderBudget(exp);
+      renderCategoryBudgets(catMap);
       renderChart(catMap);
       renderList(filtered);
     }
@@ -719,22 +786,79 @@
       budgetDisplay.innerText = formatJPY(monthlyBudget);
       if (monthlyBudget <= 0) {
         budgetProgress.style.width = "0%";
-        budgetStatus.innerText = "Chưa đặt ngân sách";
+        budgetStatus.innerText = "Chưa đặt ngân sách tổng";
         budgetPercent.innerText = "0%";
         return;
       }
 
-      const percent = Math.min(Math.round((expVal / monthlyBudget) * 100), 100);
-      budgetPercent.innerText = percent + "%";
-      budgetProgress.style.width = percent + "%";
+      const rawPercent = Math.round((expVal / monthlyBudget) * 100);
+      const widthPercent = Math.min(rawPercent, 100);
+      budgetPercent.innerText = rawPercent + "%";
+      budgetProgress.style.width = widthPercent + "%";
 
       if (expVal > monthlyBudget) {
         budgetProgress.className = "h-2.5 rounded-full bg-rose-500 transition-all duration-300";
         budgetStatus.innerText = "Vượt ngân sách: " + formatJPY(expVal - monthlyBudget);
+      } else if (rawPercent >= 80) {
+        budgetProgress.className = "h-2.5 rounded-full bg-amber-500 transition-all duration-300";
+        budgetStatus.innerText = "Sắp chạm trần · Còn: " + formatJPY(monthlyBudget - expVal);
       } else {
         budgetProgress.className = "h-2.5 rounded-full bg-emerald-500 transition-all duration-300";
         budgetStatus.innerText = "Còn lại: " + formatJPY(monthlyBudget - expVal);
       }
+    }
+
+    function renderCategoryBudgets(catMap) {
+      categoryBudgetList.innerHTML = EXPENSE_CATEGORIES.map(function(cat) {
+        const spent = catMap[cat] ? Number(catMap[cat]) : 0;
+        const limit = categoryBudgets[cat] ? Number(categoryBudgets[cat]) : 0;
+
+        if (limit <= 0) {
+          return '<div onclick="setCategoryBudget(\'' + cat + '\')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/70 cursor-pointer transition flex items-center justify-between">' +
+            '<div class="flex items-center gap-2">' +
+              '<span class="text-xs font-semibold text-slate-700">' + cat + '</span>' +
+              '<span class="text-[11px] text-slate-400">Đã chi: ' + formatJPY(spent) + '</span>' +
+            '</div>' +
+            '<span class="text-[11px] text-indigo-600 font-semibold">+ Đặt hạn mức</span>' +
+          '</div>';
+        }
+
+        const rawPercent = Math.round((spent / limit) * 100);
+        const barWidth = Math.min(rawPercent, 100);
+        const isOver = spent > limit;
+        const isWarn = !isOver && rawPercent >= 80;
+
+        let barColor = "bg-emerald-500";
+        let statusText = "Còn " + formatJPY(limit - spent);
+        let statusClass = "text-slate-400";
+
+        if (isOver) {
+          barColor = "bg-rose-500";
+          statusText = "Vượt " + formatJPY(spent - limit);
+          statusClass = "text-rose-600 font-semibold";
+        } else if (isWarn) {
+          barColor = "bg-amber-500";
+          statusText = "Còn " + formatJPY(limit - spent);
+          statusClass = "text-amber-600 font-medium";
+        }
+
+        return '<div onclick="setCategoryBudget(\'' + cat + '\')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 cursor-pointer transition space-y-1.5">' +
+          '<div class="flex items-center justify-between text-xs">' +
+            '<span class="font-semibold text-slate-800">' + cat + '</span>' +
+            '<div class="flex items-center gap-1.5">' +
+              '<span class="font-bold text-slate-700">' + formatJPY(spent) + '</span>' +
+              '<span class="text-slate-400">/ ' + formatJPY(limit) + ' ✎</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">' +
+            '<div class="h-1.5 rounded-full ' + barColor + ' transition-all duration-300" style="width: ' + barWidth + '%"></div>' +
+          '</div>' +
+          '<div class="flex justify-between text-[10px]">' +
+            '<span class="' + statusClass + '">' + statusText + '</span>' +
+            '<span class="text-slate-400">' + rawPercent + '%</span>' +
+          '</div>' +
+        '</div>';
+      }).join("");
     }
 
     function renderChart(catMap) {
