@@ -46,7 +46,10 @@
     <!-- Top Bar -->
     <header class="flex items-center justify-between pb-2 border-b border-slate-200">
       <div>
-        <h2 class="text-xs uppercase tracking-wider text-indigo-600 font-bold">Cashies</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs uppercase tracking-wider text-indigo-600 font-bold">Cashies</h2>
+          <span id="syncBadge" class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">Đã đồng bộ Cloud</span>
+        </div>
         <p id="userGreeting" class="font-bold text-slate-800 text-base"></p>
       </div>
       <div class="flex items-center gap-2">
@@ -152,7 +155,7 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-sm transition">
+        <button type="submit" id="btnSubmitTx" class="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-xl text-sm transition">
           Lưu Giao Dịch
         </button>
       </form>
@@ -182,7 +185,7 @@
         <div class="grid grid-cols-2 gap-2">
           <input type="text" id="debtNote" placeholder="Ghi chú / Hạn trả" 
             class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
+          <button type="submit" id="btnSubmitDebt" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
             + Thêm khoản nợ
           </button>
         </div>
@@ -201,7 +204,10 @@
 
     <!-- Lịch sử giao dịch -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-      <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
+        <span id="txCountBadge" class="text-[11px] text-slate-400">0 giao dịch</span>
+      </div>
       <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
     </section>
 
@@ -238,6 +244,10 @@
     let currentType = "expense";
     let monthlyBudget = 0;
     let chartInstance = null;
+    let isSubmittingTx = false;
+    let isSubmittingDebt = false;
+    let unsubscribeTx = null;
+    let unsubscribeDebt = null;
 
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
@@ -246,6 +256,8 @@
     const btnConfigKey = document.getElementById("btnConfigKey");
     const userGreeting = document.getElementById("userGreeting");
     const appStatus = document.getElementById("appStatus");
+    const syncBadge = document.getElementById("syncBadge");
+    const txCountBadge = document.getElementById("txCountBadge");
 
     const filterMonth = document.getElementById("filterMonth");
     const totalIncomeEl = document.getElementById("totalIncome");
@@ -261,6 +273,7 @@
     const btnTypeExpense = document.getElementById("btnTypeExpense");
     const btnTypeIncome = document.getElementById("btnTypeIncome");
     const txForm = document.getElementById("txForm");
+    const btnSubmitTx = document.getElementById("btnSubmitTx");
     const txAmount = document.getElementById("txAmount");
     const txDate = document.getElementById("txDate");
     const txCategory = document.getElementById("txCategory");
@@ -271,18 +284,36 @@
     const scanStatus = document.getElementById("scanStatus");
 
     const debtForm = document.getElementById("debtForm");
+    const btnSubmitDebt = document.getElementById("btnSubmitDebt");
     const debtTitle = document.getElementById("debtTitle");
     const debtAmount = document.getElementById("debtAmount");
     const debtNote = document.getElementById("debtNote");
     const debtList = document.getElementById("debtList");
     const totalRemainingDebt = document.getElementById("totalRemainingDebt");
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    // Lấy ngày theo giờ địa phương của thiết bị
+    const now = new Date();
+    const yearStr = String(now.getFullYear());
+    const monthStr = String(now.getMonth() + 1).padStart(2, "0");
+    const dayStr = String(now.getDate()).padStart(2, "0");
+    const todayStr = yearStr + "-" + monthStr + "-" + dayStr;
+
     txDate.value = todayStr;
-    filterMonth.value = todayStr.slice(0, 7);
+    filterMonth.value = yearStr + "-" + monthStr;
 
     if (appStatus) {
       appStatus.innerText = "Sẵn sàng kết nối ✓";
+    }
+
+    function setSyncStatus(ok, text) {
+      if (!syncBadge) return;
+      if (ok) {
+        syncBadge.className = "text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium";
+        syncBadge.innerText = text ? text : "Đã đồng bộ Cloud";
+      } else {
+        syncBadge.className = "text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium";
+        syncBadge.innerText = text ? text : "Lỗi đồng bộ!";
+      }
     }
 
     // ==========================================
@@ -294,7 +325,9 @@
         await auth.signInWithPopup(provider);
       } catch (err) {
         console.warn("Popup error:", err);
-        if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
+        if (err.code === "auth/popup-blocked") {
+          auth.signInWithRedirect(provider);
+        } else if (err.code === "auth/popup-closed-by-user") {
           auth.signInWithRedirect(provider);
         } else {
           alert("Lỗi đăng nhập: " + err.message);
@@ -322,6 +355,8 @@
         listenToTransactions();
         listenToDebts();
       } else {
+        if (unsubscribeTx) unsubscribeTx();
+        if (unsubscribeDebt) unsubscribeDebt();
         loginView.classList.remove("hidden");
         appView.classList.add("hidden");
         if (chartInstance) {
@@ -346,29 +381,44 @@
     });
 
     // ==========================================
-    // 5. FIRESTORE GIAO DỊCH
+    // 5. FIRESTORE GIAO DỊCH (ĐỒNG BỘ CLOUD)
     // ==========================================
     function listenToTransactions() {
       if (!currentUser) return;
-      db.collection("users").doc(currentUser.uid).collection("transactions")
-        .orderBy("date", "desc")
+      if (unsubscribeTx) unsubscribeTx();
+
+      unsubscribeTx = db.collection("users").doc(currentUser.uid).collection("transactions")
         .onSnapshot(function(snapshot) {
-          transactions = snapshot.docs.map(function(doc) {
+          const list = snapshot.docs.map(function(doc) {
             return Object.assign({ id: doc.id }, doc.data());
           });
+          // Sắp xếp ngày mới nhất lên đầu ngay trong JS để không bao giờ bị lỗi thiếu Index của Firestore
+          list.sort(function(a, b) {
+            const dateA = a.date ? a.date : "";
+            const dateB = b.date ? b.date : "";
+            return dateB.localeCompare(dateA);
+          });
+          transactions = list;
+          setSyncStatus(true, "Đã đồng bộ (" + list.length + ")");
           renderAll();
         }, function(err) {
-          console.error("Lỗi:", err);
+          console.error("Lỗi đọc giao dịch:", err);
+          setSyncStatus(false, "Chưa cấp quyền Firestore!");
+          alert("Không thể đồng bộ dữ liệu với Cloud: " + err.message + "\n\nHãy kiểm tra lại mục Firestore Database > Rules trên Firebase Console!");
         });
     }
 
     async function loadUserSettings() {
       if (!currentUser) return;
-      const doc = await db.collection("users").doc(currentUser.uid).get();
-      if (doc.exists && doc.data().monthlyBudget) {
-        monthlyBudget = doc.data().monthlyBudget;
+      try {
+        const doc = await db.collection("users").doc(currentUser.uid).get();
+        if (doc.exists && doc.data().monthlyBudget) {
+          monthlyBudget = doc.data().monthlyBudget;
+        }
+        renderAll();
+      } catch (err) {
+        console.warn("Lỗi tải hạn mức:", err);
       }
-      renderBudget(0);
     }
 
     btnSetBudget.addEventListener("click", async function() {
@@ -378,37 +428,71 @@
         const parsed = parseInt(input, 10);
         const val = isNaN(parsed) ? 0 : parsed;
         monthlyBudget = val;
-        await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
-        renderAll();
+        try {
+          await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
+          renderAll();
+        } catch (err) {
+          alert("Lỗi lưu ngân sách: " + err.message);
+        }
       }
     });
 
+    // Xử lý lưu giao dịch: Khóa nút ngay lập tức chống bấm nhiều lần
     txForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       if (!currentUser) return;
+      if (isSubmittingTx) return;
 
+      const amountVal = Math.abs(parseInt(txAmount.value, 10));
+      if (isNaN(amountVal) || amountVal <= 0) {
+        alert("Vui lòng nhập số tiền hợp lệ!");
+        return;
+      }
+
+      isSubmittingTx = true;
+      btnSubmitTx.disabled = true;
+      btnSubmitTx.innerText = "Đang lưu...";
+
+      const chosenDate = txDate.value ? txDate.value : todayStr;
       const record = {
-        amount: Math.abs(parseInt(txAmount.value, 10)),
+        amount: amountVal,
         type: currentType,
         category: txCategory.value,
-        date: txDate.value,
+        date: chosenDate,
         note: txNote.value.trim(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
+        
+        // Nếu ngày của giao dịch thuộc tháng khác, tự động chuyển bộ lọc sang tháng đó để người dùng thấy ngay
+        const txMonth = chosenDate.slice(0, 7);
+        if (txMonth && filterMonth.value !== txMonth) {
+          filterMonth.value = txMonth;
+        }
+
+        // Xóa trắng form ngay sau khi lưu thành công
         txAmount.value = "";
         txNote.value = "";
         txDate.value = todayStr;
+        renderAll();
       } catch (err) {
-        alert("Lỗi lưu giao dịch: " + err.message);
+        alert("Lỗi lưu giao dịch lên Cloud: " + err.message);
+      } finally {
+        isSubmittingTx = false;
+        btnSubmitTx.disabled = false;
+        btnSubmitTx.innerText = "Lưu Giao Dịch";
       }
     });
 
     window.deleteTx = async function(id) {
       if (!confirm("Xóa giao dịch này?")) return;
-      await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
+      } catch (err) {
+        alert("Lỗi xóa: " + err.message);
+      }
     };
 
     filterMonth.addEventListener("change", function() {
@@ -425,23 +509,31 @@
 
     function listenToDebts() {
       if (!currentUser) return;
-      db.collection("users").doc(currentUser.uid).collection("debts")
-        .orderBy("createdAt", "desc")
+      if (unsubscribeDebt) unsubscribeDebt();
+
+      unsubscribeDebt = db.collection("users").doc(currentUser.uid).collection("debts")
         .onSnapshot(function(snapshot) {
           debts = snapshot.docs.map(function(doc) {
             return Object.assign({ id: doc.id }, doc.data());
           });
           renderDebts();
         }, function(err) {
-          console.error("Lỗi:", err);
+          console.error("Lỗi đọc sổ nợ:", err);
         });
     }
 
     debtForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       if (!currentUser) return;
+      if (isSubmittingDebt) return;
 
       const originalAmount = Math.abs(parseInt(debtAmount.value, 10));
+      if (isNaN(originalAmount) || originalAmount <= 0) return;
+
+      isSubmittingDebt = true;
+      btnSubmitDebt.disabled = true;
+      btnSubmitDebt.innerText = "Đang thêm...";
+
       const record = {
         title: debtTitle.value.trim(),
         originalAmount: originalAmount,
@@ -457,6 +549,10 @@
         debtNote.value = "";
       } catch (err) {
         alert("Lỗi thêm nợ: " + err.message);
+      } finally {
+        isSubmittingDebt = false;
+        btnSubmitDebt.disabled = false;
+        btnSubmitDebt.innerText = "+ Thêm khoản nợ";
       }
     });
 
@@ -542,20 +638,26 @@
     function renderAll() {
       const selectedMonth = filterMonth.value;
       const filtered = transactions.filter(function(t) {
+        if (!selectedMonth) return true;
         return t.date && t.date.startsWith(selectedMonth);
       });
+
+      if (txCountBadge) {
+        txCountBadge.innerText = filtered.length + " giao dịch trong tháng";
+      }
 
       let inc = 0;
       let exp = 0;
       const catMap = {};
 
       filtered.forEach(function(t) {
+        const amt = Number(t.amount) ? Number(t.amount) : 0;
         if (t.type === "income") {
-          inc += t.amount;
+          inc += amt;
         } else {
-          exp += t.amount;
+          exp += amt;
           const prev = catMap[t.category] ? catMap[t.category] : 0;
-          catMap[t.category] = prev + t.amount;
+          catMap[t.category] = prev + amt;
         }
       });
 
@@ -628,7 +730,7 @@
 
     function renderList(list) {
       if (list.length === 0) {
-        txList.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Không có giao dịch nào trong tháng này.</p>';
+        txList.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Không có giao dịch nào trong tháng ' + filterMonth.value + '.</p>';
         return;
       }
 
@@ -727,7 +829,7 @@
 
         const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + apiKey;
 
-        const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD", "note": "tên cửa hàng và món chính"}';
+        const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD (nếu không rõ năm hoặc ghi Reiwa 8 thì dùng năm ' + yearStr + ', nếu không thấy ngày thì để ' + todayStr + ')", "note": "tên cửa hàng và món chính"}';
 
         const payload = {
           contents: [{
@@ -767,7 +869,11 @@
         const parsed = JSON.parse(cleanJson);
 
         if (parsed.amount) txAmount.value = parsed.amount;
-        if (parsed.date) txDate.value = parsed.date;
+        if (parsed.date && parsed.date.length === 10) {
+          txDate.value = parsed.date;
+        } else {
+          txDate.value = todayStr;
+        }
         if (parsed.note) txNote.value = parsed.note;
         if (parsed.category) txCategory.value = parsed.category;
 
