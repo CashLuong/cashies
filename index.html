@@ -48,7 +48,7 @@
       <div>
         <div class="flex items-center gap-2">
           <h2 class="text-xs uppercase tracking-wider text-indigo-600 font-bold">Cashies</h2>
-          <span id="syncBadge" class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">Đã đồng bộ Cloud</span>
+          <span id="syncBadge" class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">Đang kết nối...</span>
         </div>
         <p id="userGreeting" class="font-bold text-slate-800 text-base"></p>
       </div>
@@ -78,8 +78,12 @@
         <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
         <p id="totalExpense" class="text-base font-bold text-rose-600 mt-1">¥0</p>
       </div>
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-        <p class="text-xs text-slate-400 font-medium">Số Dư</p>
+      <!-- Ô Số Dư có tính năng bấm để chỉnh sửa trực tiếp -->
+      <div id="btnEditBalance" title="Bấm để điều chỉnh số dư thực tế" class="bg-white p-3.5 rounded-2xl border border-indigo-200 hover:border-indigo-400 cursor-pointer shadow-xs transition group">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
+          <span class="text-[10px] text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded font-semibold">✎ Sửa</span>
+        </div>
         <p id="netBalance" class="text-base font-bold text-slate-800 mt-1">¥0</p>
       </div>
     </section>
@@ -146,6 +150,7 @@
               <option value="Nhà cửa & Hóa đơn">Nhà cửa & Hóa đơn</option>
               <option value="Học tập / Công việc">Học tập / Công việc</option>
               <option value="Lương">Lương</option>
+              <option value="Điều chỉnh số dư">Điều chỉnh số dư</option>
               <option value="Khác">Khác</option>
             </select>
           </div>
@@ -155,7 +160,7 @@
           </div>
         </div>
 
-        <button type="submit" id="btnSubmitTx" class="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-xl text-sm transition">
+        <button type="submit" id="btnSubmitTx" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-sm transition">
           Lưu Giao Dịch
         </button>
       </form>
@@ -185,7 +190,7 @@
         <div class="grid grid-cols-2 gap-2">
           <input type="text" id="debtNote" placeholder="Ghi chú / Hạn trả" 
             class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
-          <button type="submit" id="btnSubmitDebt" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
+          <button type="submit" id="btnSubmitDebt" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
             + Thêm khoản nợ
           </button>
         </div>
@@ -204,10 +209,7 @@
 
     <!-- Lịch sử giao dịch -->
     <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-      <div class="flex items-center justify-between">
-        <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
-        <span id="txCountBadge" class="text-[11px] text-slate-400">0 giao dịch</span>
-      </div>
+      <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
       <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
     </section>
 
@@ -246,8 +248,9 @@
     let chartInstance = null;
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
-    let unsubscribeTx = null;
-    let unsubscribeDebt = null;
+    let currentMonthNet = 0;
+    let currentMonthIncome = 0;
+    let currentMonthExpense = 0;
 
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
@@ -257,12 +260,12 @@
     const userGreeting = document.getElementById("userGreeting");
     const appStatus = document.getElementById("appStatus");
     const syncBadge = document.getElementById("syncBadge");
-    const txCountBadge = document.getElementById("txCountBadge");
 
     const filterMonth = document.getElementById("filterMonth");
     const totalIncomeEl = document.getElementById("totalIncome");
     const totalExpenseEl = document.getElementById("totalExpense");
     const netBalanceEl = document.getElementById("netBalance");
+    const btnEditBalance = document.getElementById("btnEditBalance");
 
     const budgetDisplay = document.getElementById("budgetDisplay");
     const btnSetBudget = document.getElementById("btnSetBudget");
@@ -273,58 +276,40 @@
     const btnTypeExpense = document.getElementById("btnTypeExpense");
     const btnTypeIncome = document.getElementById("btnTypeIncome");
     const txForm = document.getElementById("txForm");
-    const btnSubmitTx = document.getElementById("btnSubmitTx");
     const txAmount = document.getElementById("txAmount");
     const txDate = document.getElementById("txDate");
     const txCategory = document.getElementById("txCategory");
     const txNote = document.getElementById("txNote");
     const txList = document.getElementById("txList");
+    const btnSubmitTx = document.getElementById("btnSubmitTx");
 
     const receiptInput = document.getElementById("receiptInput");
     const scanStatus = document.getElementById("scanStatus");
 
     const debtForm = document.getElementById("debtForm");
-    const btnSubmitDebt = document.getElementById("btnSubmitDebt");
     const debtTitle = document.getElementById("debtTitle");
     const debtAmount = document.getElementById("debtAmount");
     const debtNote = document.getElementById("debtNote");
     const debtList = document.getElementById("debtList");
     const totalRemainingDebt = document.getElementById("totalRemainingDebt");
+    const btnSubmitDebt = document.getElementById("btnSubmitDebt");
 
-    // Lấy ngày theo giờ địa phương của thiết bị
-    const now = new Date();
-    const yearStr = String(now.getFullYear());
-    const monthStr = String(now.getMonth() + 1).padStart(2, "0");
-    const dayStr = String(now.getDate()).padStart(2, "0");
-    const todayStr = yearStr + "-" + monthStr + "-" + dayStr;
-
+    const todayStr = new Date().toISOString().slice(0, 10);
     txDate.value = todayStr;
-    filterMonth.value = yearStr + "-" + monthStr;
+    filterMonth.value = todayStr.slice(0, 7);
 
     if (appStatus) {
       appStatus.innerText = "Sẵn sàng kết nối ✓";
     }
 
-    function setSyncStatus(ok, text) {
-      if (!syncBadge) return;
-      if (ok) {
-        syncBadge.className = "text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium";
-        syncBadge.innerText = text ? text : "Đã đồng bộ Cloud";
-      } else {
-        syncBadge.className = "text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium";
-        syncBadge.innerText = text ? text : "Lỗi đồng bộ!";
-      }
-    }
-
     // ==========================================
-    // 3. XÁC THỰC NGƯỜI DÙNG (AUTH)
+    // 3. XÁC THỰC NGƯỜNG DÙNG (AUTH)
     // ==========================================
     btnLogin.addEventListener("click", async function() {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         await auth.signInWithPopup(provider);
       } catch (err) {
-        console.warn("Popup error:", err);
         if (err.code === "auth/popup-blocked") {
           auth.signInWithRedirect(provider);
         } else if (err.code === "auth/popup-closed-by-user") {
@@ -355,8 +340,6 @@
         listenToTransactions();
         listenToDebts();
       } else {
-        if (unsubscribeTx) unsubscribeTx();
-        if (unsubscribeDebt) unsubscribeDebt();
         loginView.classList.remove("hidden");
         appView.classList.add("hidden");
         if (chartInstance) {
@@ -381,30 +364,28 @@
     });
 
     // ==========================================
-    // 5. FIRESTORE GIAO DỊCH (ĐỒNG BỘ CLOUD)
+    // 5. FIRESTORE GIAO DỊCH & CHỈNH SỬA SỐ DƯ
     // ==========================================
     function listenToTransactions() {
       if (!currentUser) return;
-      if (unsubscribeTx) unsubscribeTx();
-
-      unsubscribeTx = db.collection("users").doc(currentUser.uid).collection("transactions")
+      db.collection("users").doc(currentUser.uid).collection("transactions")
+        .orderBy("date", "desc")
         .onSnapshot(function(snapshot) {
-          const list = snapshot.docs.map(function(doc) {
+          transactions = snapshot.docs.map(function(doc) {
             return Object.assign({ id: doc.id }, doc.data());
           });
-          // Sắp xếp ngày mới nhất lên đầu ngay trong JS để không bao giờ bị lỗi thiếu Index của Firestore
-          list.sort(function(a, b) {
-            const dateA = a.date ? a.date : "";
-            const dateB = b.date ? b.date : "";
-            return dateB.localeCompare(dateA);
-          });
-          transactions = list;
-          setSyncStatus(true, "Đã đồng bộ (" + list.length + ")");
+          if (syncBadge) {
+            syncBadge.innerText = "Đã đồng bộ (" + transactions.length + ")";
+            syncBadge.className = "text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium";
+          }
           renderAll();
         }, function(err) {
-          console.error("Lỗi đọc giao dịch:", err);
-          setSyncStatus(false, "Chưa cấp quyền Firestore!");
-          alert("Không thể đồng bộ dữ liệu với Cloud: " + err.message + "\n\nHãy kiểm tra lại mục Firestore Database > Rules trên Firebase Console!");
+          console.error("Lỗi Firestore:", err);
+          if (syncBadge) {
+            syncBadge.innerText = "Lỗi đồng bộ!";
+            syncBadge.className = "text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium";
+          }
+          alert("Không thể đồng bộ dữ liệu với đám mây. Hãy kiểm tra lại Firestore Security Rules trong Firebase Console: " + err.message);
         });
     }
 
@@ -415,9 +396,9 @@
         if (doc.exists && doc.data().monthlyBudget) {
           monthlyBudget = doc.data().monthlyBudget;
         }
-        renderAll();
-      } catch (err) {
-        console.warn("Lỗi tải hạn mức:", err);
+        renderBudget(currentMonthExpense);
+      } catch (e) {
+        console.warn("Chưa có cài đặt:", e);
       }
     }
 
@@ -428,34 +409,104 @@
         const parsed = parseInt(input, 10);
         const val = isNaN(parsed) ? 0 : parsed;
         monthlyBudget = val;
-        try {
-          await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
-          renderAll();
-        } catch (err) {
-          alert("Lỗi lưu ngân sách: " + err.message);
-        }
+        await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
+        renderAll();
       }
     });
 
-    // Xử lý lưu giao dịch: Khóa nút ngay lập tức chống bấm nhiều lần
+    // TÍNH NĂNG MỚI: CHỈNH SỬA SỐ DƯ TRỰC TIẾP
+    btnEditBalance.addEventListener("click", async function() {
+      if (!currentUser) return;
+
+      const input = prompt(
+        "Số dư trên sổ hiện tại: " + formatJPY(currentMonthNet) + "\nNhập Số Dư thực tế trong ví/tài khoản của bạn (¥):",
+        String(currentMonthNet)
+      );
+
+      if (input === null) return;
+      const targetBalance = parseInt(input.replace(/,/g, "").trim(), 10);
+      if (isNaN(targetBalance)) {
+        alert("Số tiền nhập vào không hợp lệ!");
+        return;
+      }
+
+      const diff = targetBalance - currentMonthNet;
+      if (diff === 0) {
+        alert("Số dư thực tế đã khớp hoàn toàn!");
+        return;
+      }
+
+      // Ngày ghi nhận điều chỉnh: nếu đang ở tháng hiện tại thì lấy hôm nay, nếu tháng khác thì lấy ngày 01 của tháng đó
+      const selectedMonth = filterMonth.value;
+      const adjustDate = todayStr.startsWith(selectedMonth) ? todayStr : (selectedMonth + "-01");
+
+      let record = null;
+
+      if (diff > 0) {
+        // Số dư thực tế lớn hơn -> Tăng Tổng Thu
+        record = {
+          amount: diff,
+          type: "income",
+          category: "Điều chỉnh số dư",
+          date: adjustDate,
+          note: "Cập nhật tăng số dư thực tế (+" + formatJPY(diff) + ")",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+      } else {
+        // Số dư thực tế nhỏ hơn (diff < 0) -> Hỏi người dùng muốn tăng Chi tiêu quên ghi hay giảm trực tiếp Tổng Thu
+        const absDiff = Math.abs(diff);
+        const addAsExpense = confirm(
+          "Số dư thực tế ít hơn sổ sách " + formatJPY(absDiff) + ".\n\n" +
+          "• Bấm OK: Ghi nhận khoản hụt này vào TỔNG CHI (Chi tiêu quên ghi/không hóa đơn).\n" +
+          "• Bấm Cancel (Hủy): Trừ trực tiếp vào TỔNG THU."
+        );
+
+        if (addAsExpense) {
+          record = {
+            amount: absDiff,
+            type: "expense",
+            category: "Điều chỉnh số dư",
+            date: adjustDate,
+            note: "Chi tiêu quên ghi / Khớp số dư (-" + formatJPY(absDiff) + ")",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+        } else {
+          // Trừ trực tiếp vào Tổng Thu bằng khoản income âm
+          record = {
+            amount: -absDiff,
+            type: "income",
+            category: "Điều chỉnh số dư",
+            date: adjustDate,
+            note: "Điều chỉnh giảm Tổng Thu (-" + formatJPY(absDiff) + ")",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+        }
+      }
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
+      } catch (err) {
+        alert("Lỗi khi cập nhật số dư: " + err.message);
+      }
+    });
+
+    // Lưu giao dịch mới (Có khóa chống bấm đúp trên iOS)
     txForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       if (!currentUser) return;
       if (isSubmittingTx) return;
 
-      const amountVal = Math.abs(parseInt(txAmount.value, 10));
-      if (isNaN(amountVal) || amountVal <= 0) {
-        alert("Vui lòng nhập số tiền hợp lệ!");
-        return;
-      }
+      const rawAmount = parseInt(txAmount.value, 10);
+      if (isNaN(rawAmount) || rawAmount === 0) return;
 
       isSubmittingTx = true;
       btnSubmitTx.disabled = true;
       btnSubmitTx.innerText = "Đang lưu...";
+      btnSubmitTx.className = "w-full bg-slate-400 text-white font-medium py-2.5 rounded-xl text-sm transition cursor-not-allowed";
 
-      const chosenDate = txDate.value ? txDate.value : todayStr;
+      const chosenDate = txDate.value;
       const record = {
-        amount: amountVal,
+        amount: Math.abs(rawAmount),
         type: currentType,
         category: txCategory.value,
         date: chosenDate,
@@ -465,34 +516,28 @@
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
-        
-        // Nếu ngày của giao dịch thuộc tháng khác, tự động chuyển bộ lọc sang tháng đó để người dùng thấy ngay
-        const txMonth = chosenDate.slice(0, 7);
-        if (txMonth && filterMonth.value !== txMonth) {
-          filterMonth.value = txMonth;
-        }
-
-        // Xóa trắng form ngay sau khi lưu thành công
         txAmount.value = "";
         txNote.value = "";
-        txDate.value = todayStr;
-        renderAll();
+        
+        // Nếu ngày của hóa đơn thuộc tháng khác, tự động chuyển bộ lọc sang tháng đó để thấy ngay
+        const txMonth = chosenDate.slice(0, 7);
+        if (filterMonth.value !== txMonth) {
+          filterMonth.value = txMonth;
+          renderAll();
+        }
       } catch (err) {
-        alert("Lỗi lưu giao dịch lên Cloud: " + err.message);
+        alert("Lỗi lưu giao dịch: " + err.message);
       } finally {
         isSubmittingTx = false;
         btnSubmitTx.disabled = false;
         btnSubmitTx.innerText = "Lưu Giao Dịch";
+        btnSubmitTx.className = "w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-sm transition";
       }
     });
 
     window.deleteTx = async function(id) {
       if (!confirm("Xóa giao dịch này?")) return;
-      try {
-        await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
-      } catch (err) {
-        alert("Lỗi xóa: " + err.message);
-      }
+      await db.collection("users").doc(currentUser.uid).collection("transactions").doc(id).delete();
     };
 
     filterMonth.addEventListener("change", function() {
@@ -509,16 +554,15 @@
 
     function listenToDebts() {
       if (!currentUser) return;
-      if (unsubscribeDebt) unsubscribeDebt();
-
-      unsubscribeDebt = db.collection("users").doc(currentUser.uid).collection("debts")
+      db.collection("users").doc(currentUser.uid).collection("debts")
+        .orderBy("createdAt", "desc")
         .onSnapshot(function(snapshot) {
           debts = snapshot.docs.map(function(doc) {
             return Object.assign({ id: doc.id }, doc.data());
           });
           renderDebts();
         }, function(err) {
-          console.error("Lỗi đọc sổ nợ:", err);
+          console.error("Lỗi đọc nợ:", err);
         });
     }
 
@@ -527,13 +571,11 @@
       if (!currentUser) return;
       if (isSubmittingDebt) return;
 
-      const originalAmount = Math.abs(parseInt(debtAmount.value, 10));
-      if (isNaN(originalAmount) || originalAmount <= 0) return;
-
       isSubmittingDebt = true;
       btnSubmitDebt.disabled = true;
       btnSubmitDebt.innerText = "Đang thêm...";
 
+      const originalAmount = Math.abs(parseInt(debtAmount.value, 10));
       const record = {
         title: debtTitle.value.trim(),
         originalAmount: originalAmount,
@@ -561,7 +603,7 @@
       const input = prompt("Khoản nợ còn lại: " + formatVND(remaining) + "\nNhập số tiền VNĐ vừa trả:");
       if (!input) return;
 
-      const payVal = parseInt(input, 10);
+      const payVal = parseInt(input.replace(/,/g, "").trim(), 10);
       if (isNaN(payVal)) return alert("Số tiền không hợp lệ!");
       if (payVal <= 0) return alert("Số tiền phải lớn hơn 0!");
 
@@ -638,34 +680,34 @@
     function renderAll() {
       const selectedMonth = filterMonth.value;
       const filtered = transactions.filter(function(t) {
-        if (!selectedMonth) return true;
         return t.date && t.date.startsWith(selectedMonth);
       });
-
-      if (txCountBadge) {
-        txCountBadge.innerText = filtered.length + " giao dịch trong tháng";
-      }
 
       let inc = 0;
       let exp = 0;
       const catMap = {};
 
       filtered.forEach(function(t) {
-        const amt = Number(t.amount) ? Number(t.amount) : 0;
+        const amt = Number(t.amount);
         if (t.type === "income") {
           inc += amt;
         } else {
           exp += amt;
-          const prev = catMap[t.category] ? catMap[t.category] : 0;
-          catMap[t.category] = prev + amt;
+          if (amt > 0) {
+            const prev = catMap[t.category] ? catMap[t.category] : 0;
+            catMap[t.category] = prev + amt;
+          }
         }
       });
 
-      totalIncomeEl.innerText = formatJPY(inc);
+      currentMonthIncome = inc;
+      currentMonthExpense = exp;
+      currentMonthNet = inc - exp;
+
+      totalIncomeEl.innerText = (inc < 0 ? "-" : "") + formatJPY(Math.abs(inc));
       totalExpenseEl.innerText = formatJPY(exp);
-      const net = inc - exp;
-      netBalanceEl.innerText = (net < 0 ? "-" : "") + formatJPY(Math.abs(net));
-      netBalanceEl.className = "text-base font-bold mt-1 " + (net < 0 ? "text-rose-600" : "text-slate-800");
+      netBalanceEl.innerText = (currentMonthNet < 0 ? "-" : "") + formatJPY(Math.abs(currentMonthNet));
+      netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
 
       renderBudget(exp);
       renderChart(catMap);
@@ -715,7 +757,7 @@
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#64748B"]
+            backgroundColor: ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#64748B", "#0EA5E9"]
           }]
         },
         options: {
@@ -730,14 +772,25 @@
 
     function renderList(list) {
       if (list.length === 0) {
-        txList.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Không có giao dịch nào trong tháng ' + filterMonth.value + '.</p>';
+        txList.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Không có giao dịch nào trong tháng này.</p>';
         return;
       }
 
       txList.innerHTML = list.map(function(t) {
         const noteSpan = t.note ? '<span class="font-normal text-slate-400"> · ' + t.note + '</span>' : "";
-        const amountClass = t.type === "income" ? "text-emerald-600" : "text-slate-800";
-        const sign = t.type === "income" ? "+" : "-";
+        const amt = Number(t.amount);
+        let amountClass = "text-slate-800";
+        let sign = "-";
+
+        if (t.type === "income") {
+          if (amt >= 0) {
+            amountClass = "text-emerald-600";
+            sign = "+";
+          } else {
+            amountClass = "text-amber-600";
+            sign = "-";
+          }
+        }
 
         return '<div class="py-2.5 flex items-center justify-between">' +
           '<div>' +
@@ -745,7 +798,7 @@
             '<p class="text-[11px] text-slate-400 mt-0.5">' + t.date + '</p>' +
           '</div>' +
           '<div class="flex items-center gap-2">' +
-            '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(t.amount) + '</span>' +
+            '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(Math.abs(amt)) + '</span>' +
             '<button onclick="deleteTx(\'' + t.id + '\')" class="text-slate-300 hover:text-rose-500 text-xs px-1">✕</button>' +
           '</div>' +
         '</div>';
@@ -827,9 +880,9 @@
         const compressedDataUrl = await compressImage(file, 800, 0.7);
         const base64Data = compressedDataUrl.split(",")[1];
 
-        const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" + apiKey;
+        const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
 
-        const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD (nếu không rõ năm hoặc ghi Reiwa 8 thì dùng năm ' + yearStr + ', nếu không thấy ngày thì để ' + todayStr + ')", "note": "tên cửa hàng và món chính"}';
+        const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD", "note": "tên cửa hàng và món chính"}';
 
         const payload = {
           contents: [{
@@ -869,11 +922,7 @@
         const parsed = JSON.parse(cleanJson);
 
         if (parsed.amount) txAmount.value = parsed.amount;
-        if (parsed.date && parsed.date.length === 10) {
-          txDate.value = parsed.date;
-        } else {
-          txDate.value = todayStr;
-        }
+        if (parsed.date) txDate.value = parsed.date;
         if (parsed.note) txNote.value = parsed.note;
         if (parsed.category) txCategory.value = parsed.category;
 
