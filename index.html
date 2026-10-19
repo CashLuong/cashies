@@ -302,7 +302,9 @@
         await auth.signInWithPopup(provider);
       } catch (err) {
         console.warn("Popup error:", err);
-        if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
+        if (err.code === "auth/popup-blocked") {
+          auth.signInWithRedirect(provider);
+        } else if (err.code === "auth/popup-closed-by-user") {
           auth.signInWithRedirect(provider);
         } else {
           alert("Lỗi đăng nhập: " + err.message);
@@ -366,6 +368,7 @@
           });
           if (syncBadge) {
             syncBadge.innerText = "Đã đồng bộ (" + transactions.length + ")";
+            syncBadge.className = "text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium";
           }
           renderAll();
         }, function(err) {
@@ -694,10 +697,10 @@
       }).join("");
     }
 
-// ==========================================
+    // ==========================================
     // 8. QUÉT HÓA ĐƠN TRỰC TIẾP (GEMINI API)
     // ==========================================
-    btnConfigKey.addEventListener("click", () => {
+    btnConfigKey.addEventListener("click", function() {
       const saved = localStorage.getItem("CASHIES_GEMINI_KEY");
       const current = saved ? saved : "";
       const input = prompt("Nhập Gemini API Key của bạn (lấy tại aistudio.google.com):", current);
@@ -707,7 +710,49 @@
       }
     });
 
-    receiptInput.addEventListener("change", async (e) => {
+    function compressImage(file, maxSize, quality) {
+      return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(event) {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxSize) {
+                height = Math.round((height * maxSize) / width);
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = Math.round((width * maxSize) / height);
+                height = maxSize;
+              }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+            resolve(compressedDataUrl);
+          };
+          img.onerror = function() {
+            reject(new Error("Không thể xử lý định dạng ảnh này."));
+          };
+        };
+        reader.onerror = function() {
+          reject(new Error("Không thể đọc file ảnh."));
+        };
+      });
+    }
+
+    receiptInput.addEventListener("change", async function(e) {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -718,83 +763,74 @@
           receiptInput.value = "";
           return;
         }
-        localStorage.setItem("CASHIES_GEMINI_KEY", apiKey.trim());
+        apiKey = apiKey.trim();
+        localStorage.setItem("CASHIES_GEMINI_KEY", apiKey);
       }
 
-      scanStatus.innerText = "Đang phân tích...";
-      
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        try {
-          const dataUrl = reader.result;
-          const mimeType = dataUrl.split(";")[0].split(":")[1];
-          const base64Data = dataUrl.split(",")[1];
+      scanStatus.innerText = "Đang nén & phân tích...";
 
-          // Đã cập nhật sang model gemini-3.8-flash mới nhất
-          const endpoint = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$){apiKey}`;
+      try {
+        const compressedDataUrl = await compressImage(file, 1024, 0.8);
+        const base64Data = compressedDataUrl.split(",")[1];
 
-          const payload = {
-            contents: [{
-              parts: [
-                {
-                  text: `Phân tích hóa đơn này và trả về kết quả đúng định dạng JSON thuần (không dùng markdown hay code block):
-{
-  "amount": number (tổng số tiền thanh toán cuối cùng),
-  "category": string ("Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc", hoặc "Khác"),
-  "date": string (YYYY-MM-DD, nếu không thấy thì để "${todayStr}"),
-  "note": string (tên cửa hàng và món chính ngắn gọn)
-}`
-                },
-                {
-                  inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data
-                  }
+        const baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+        const endpoint = baseUrl + "?key=" + encodeURIComponent(apiKey.trim());
+
+        const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD", "note": "tên cửa hàng và món chính"}';
+
+        const payload = {
+          contents: [{
+            parts: [
+              { text: promptText },
+              {
+                inlineData: {
+                  mimeType: "image/jpeg",
+                  data: base64Data
                 }
-              ]
-            }],
-            generationConfig: {
-              responseMimeType: "application/json"
-            }
-          };
-
-          const res = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-
-          if (!res.ok) {
-            const errData = await res.json();
-            const msg = (errData.error && errData.error.message) ? errData.error.message : "Lỗi gọi Gemini API";
-            throw new Error(msg);
+              }
+            ]
+          }],
+          generationConfig: {
+            responseMimeType: "application/json"
           }
+        };
 
-          const resData = await res.json();
-          let textResponse = resData.candidates[0].content.parts[0].text;
-          // Làm sạch nếu chuỗi có chứa bọc ```json
-          textResponse = textResponse.replace(/```json|```/g, "").trim();
-          const parsed = JSON.parse(textResponse);
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-          if (parsed.amount) txAmount.value = parsed.amount;
-          if (parsed.date) txDate.value = parsed.date;
-          if (parsed.note) txNote.value = parsed.note;
-          if (parsed.category) txCategory.value = parsed.category;
-
-          btnTypeExpense.click();
-          scanStatus.innerText = "Quét Hóa Đơn (AI)";
-          alert("Đã đọc xong hóa đơn! Hãy kiểm tra lại thông tin rồi bấm Lưu Giao Dịch.");
-        } catch (err) {
-          console.error("Lỗi:", err);
-          alert("Lỗi quét hóa đơn: " + err.message);
-          scanStatus.innerText = "Quét Hóa Đơn (AI)";
-        } finally {
-          receiptInput.value = "";
+        if (!res.ok) {
+          const errData = await res.json();
+          const msg = (errData.error && errData.error.message) ? errData.error.message : "Lỗi gọi Gemini API";
+          throw new Error(msg);
         }
-      };
+
+        const resData = await res.json();
+        const rawText = resData.candidates[0].content.parts[0].text;
+        
+        const startIdx = rawText.indexOf("{");
+        const endIdx = rawText.lastIndexOf("}");
+        const cleanJson = rawText.substring(startIdx, endIdx + 1);
+        const parsed = JSON.parse(cleanJson);
+
+        if (parsed.amount) txAmount.value = parsed.amount;
+        if (parsed.date) txDate.value = parsed.date;
+        if (parsed.note) txNote.value = parsed.note;
+        if (parsed.category) txCategory.value = parsed.category;
+
+        btnTypeExpense.click();
+        scanStatus.innerText = "Quét Hóa Đơn (AI)";
+        alert("Đã đọc xong hóa đơn! Hãy kiểm tra lại thông tin rồi bấm Lưu Giao Dịch.");
+      } catch (err) {
+        console.error("Lỗi:", err);
+        alert("Lỗi quét hóa đơn: " + err.message);
+        scanStatus.innerText = "Quét Hóa Đơn (AI)";
+      } finally {
+        receiptInput.value = "";
+      }
     });
-  </script>
   </script>
 </body>
 </html>
