@@ -78,8 +78,13 @@
         <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
         <p id="totalExpense" class="text-base font-bold text-rose-600 mt-1">¥0</p>
       </div>
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-        <p class="text-xs text-slate-400 font-medium">Số Dư</p>
+      <div id="cardBalance" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all duration-150 group" title="Bấm để điều chỉnh số dư thực tế">
+        <div class="flex items-center justify-between">
+          <p id="netBalanceLabel" class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
+          <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+        </div>
         <p id="netBalance" class="text-base font-bold text-slate-800 mt-1">¥0</p>
       </div>
     </section>
@@ -243,6 +248,7 @@
     let chartInstance = null;
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
+    let currentMonthNet = 0;
 
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
@@ -257,6 +263,7 @@
     const totalIncomeEl = document.getElementById("totalIncome");
     const totalExpenseEl = document.getElementById("totalExpense");
     const netBalanceEl = document.getElementById("netBalance");
+    const cardBalance = document.getElementById("cardBalance");
 
     const budgetDisplay = document.getElementById("budgetDisplay");
     const btnSetBudget = document.getElementById("btnSetBudget");
@@ -398,6 +405,64 @@
         monthlyBudget = val;
         await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
         renderAll();
+      }
+    });
+
+    cardBalance.addEventListener("click", async function() {
+      if (!currentUser) return;
+      const selectedMonth = filterMonth.value;
+      const defaultVal = String(currentMonthNet);
+      const promptMsg = "Số dư tính toán tháng " + selectedMonth + " hiện tại là: " + formatJPY(currentMonthNet) + 
+        "\n\nNhập số dư thực tế trong ví của bạn (¥):";
+      const input = prompt(promptMsg, defaultVal);
+      if (input === null) return;
+
+      const cleanInput = input.trim().replace(/[^\d-]/g, "");
+      if (!cleanInput) return;
+
+      const targetBalance = parseInt(cleanInput, 10);
+      if (isNaN(targetBalance)) {
+        alert("Vui lòng nhập một số hợp lệ!");
+        return;
+      }
+
+      const diff = targetBalance - currentMonthNet;
+      if (diff === 0) {
+        alert("Số dư thực tế đã khớp với số dư hiển thị (" + formatJPY(targetBalance) + "), không cần điều chỉnh!");
+        return;
+      }
+
+      const isPositive = diff > 0;
+      const txType = isPositive ? "income" : "expense";
+      const txTypeName = isPositive ? "Thu nhập (+)" : "Chi tiêu (-)";
+      const amountDiff = Math.abs(diff);
+
+      const confirmMsg = "Để đưa số dư về đúng " + formatJPY(targetBalance) + ", hệ thống sẽ tự động tạo một giao dịch bù trừ:\n" +
+        "• Loại: " + txTypeName + "\n" +
+        "• Số tiền: " + formatJPY(amountDiff) + "\n" +
+        "• Danh mục: Khác\n" +
+        "• Ghi chú: Điều chỉnh số dư ví (" + (isPositive ? "+" : "-") + ")\n\n" +
+        "Bạn có đồng ý không?";
+      if (!confirm(confirmMsg)) return;
+
+      let chosenDate = todayStr;
+      if (!chosenDate.startsWith(selectedMonth)) {
+        chosenDate = selectedMonth + "-01";
+      }
+
+      const record = {
+        amount: amountDiff,
+        type: txType,
+        category: "Khác",
+        date: chosenDate,
+        note: "Điều chỉnh số dư ví (" + (isPositive ? "+" : "-") + ")",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
+      } catch (err) {
+        alert("Lỗi khi điều chỉnh số dư: " + err.message);
       }
     });
 
@@ -608,9 +673,9 @@
 
       totalIncomeEl.innerText = formatJPY(inc);
       totalExpenseEl.innerText = formatJPY(exp);
-      const net = inc - exp;
-      netBalanceEl.innerText = (net < 0 ? "-" : "") + formatJPY(Math.abs(net));
-      netBalanceEl.className = "text-base font-bold mt-1 " + (net < 0 ? "text-rose-600" : "text-slate-800");
+      currentMonthNet = inc - exp;
+      netBalanceEl.innerText = (currentMonthNet < 0 ? "-" : "") + formatJPY(Math.abs(currentMonthNet));
+      netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
 
       renderBudget(exp);
       renderChart(catMap);
@@ -710,45 +775,108 @@
       }
     });
 
-    function compressImage(file, maxSize, quality) {
-      return new Promise(function(resolve, reject) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = function(event) {
-          const img = new Image();
-          img.src = event.target.result;
-          img.onload = function() {
-            let width = img.width;
-            let height = img.height;
+    /**
+     * Tự động nén và giảm kích thước ảnh qua HTML5 Canvas trước khi gửi để tối ưu tốc độ và dung lượng payload.
+     * - Tự động giảm kích thước cạnh dài (maxDimension: 1280px) giữ nguyên tỷ lệ gốc, tối ưu cho OCR hóa đơn.
+     * - Dùng URL.createObjectURL để tiết kiệm bộ nhớ RAM trên điện thoại, tránh crash trình duyệt.
+     * - Đệm nền trắng xử lý hoàn hảo ảnh trong suốt (PNG/WebP) khi xuất JPEG.
+     * - Nén JPEG qua Canvas với thuật toán làm mịn High-Quality, pass 2 nếu file vẫn nặng.
+     */
+    function compressImage(file, maxDimension, quality) {
+      maxDimension = maxDimension || 1280;
+      quality = quality || 0.75;
 
-            if (width > height) {
-              if (width > maxSize) {
-                height = Math.round((height * maxSize) / width);
-                width = maxSize;
-              }
-            } else {
-              if (height > maxSize) {
-                width = Math.round((width * maxSize) / height);
-                height = maxSize;
+      return new Promise(function(resolve, reject) {
+        if (!file || !file.type.startsWith("image/")) {
+          reject(new Error("Vui lòng chọn một tệp hình ảnh hợp lệ."));
+          return;
+        }
+
+        const originalKB = Math.round(file.size / 1024);
+        let objectUrl = "";
+        try {
+          objectUrl = URL.createObjectURL(file);
+        } catch (e) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            processImageSrc(evt.target.result, null);
+          };
+          reader.onerror = function() {
+            reject(new Error("Không thể đọc tệp hình ảnh."));
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        processImageSrc(objectUrl, objectUrl);
+
+        function processImageSrc(src, urlToRevoke) {
+          const img = new Image();
+          img.onload = function() {
+            if (urlToRevoke) {
+              URL.revokeObjectURL(urlToRevoke);
+            }
+
+            let width = img.naturalWidth || img.width;
+            let height = img.naturalHeight || img.height;
+
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
               }
             }
 
             const canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
-            const ctx = canvas.getContext("2d");
+            const ctx = canvas.getContext("2d", { alpha: false });
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+
+            // Nền trắng chống hiện tượng ảnh PNG trong suốt chuyển thành nền đen trong JPEG
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, width, height);
+
             ctx.drawImage(img, 0, 0, width, height);
 
-            const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
-            resolve(compressedDataUrl);
+            let compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+            let compressedKB = Math.round((compressedDataUrl.length * 0.75) / 1024);
+
+            // Pass 2: Nếu dung lượng vẫn > 600KB thì nén thêm với quality 0.6
+            if (compressedKB > 600) {
+              compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
+              compressedKB = Math.round((compressedDataUrl.length * 0.75) / 1024);
+            }
+
+            const base64Data = compressedDataUrl.split(",")[1];
+            const savedPercent = originalKB > 0 ? Math.max(0, Math.round((1 - (compressedKB / originalKB)) * 100)) : 0;
+
+            resolve({
+              dataUrl: compressedDataUrl,
+              base64Data: base64Data,
+              mimeType: "image/jpeg",
+              originalKB: originalKB,
+              compressedKB: compressedKB,
+              savedPercent: savedPercent,
+              width: width,
+              height: height
+            });
           };
+
           img.onerror = function() {
+            if (urlToRevoke) {
+              URL.revokeObjectURL(urlToRevoke);
+            }
             reject(new Error("Không thể xử lý định dạng ảnh này."));
           };
-        };
-        reader.onerror = function() {
-          reject(new Error("Không thể đọc file ảnh."));
-        };
+
+          img.src = src;
+        }
       });
     }
 
@@ -767,15 +895,15 @@
         localStorage.setItem("CASHIES_GEMINI_KEY", apiKey);
       }
 
-      scanStatus.innerText = "Đang nén & phân tích...";
+      scanStatus.dataset.scanning = "true";
+      scanStatus.innerText = "Đang nén ảnh Canvas...";
 
       try {
-        const compressedDataUrl = await compressImage(file, 1024, 0.8);
-        const base64Data = compressedDataUrl.split(",")[1];
+        const compressed = await compressImage(file, 1280, 0.75);
+        console.log("Canvas nén thành công:", compressed.originalKB + "KB ➔ " + compressed.compressedKB + "KB (giảm " + compressed.savedPercent + "%) | " + compressed.width + "x" + compressed.height);
+        scanStatus.innerText = "Nén -" + compressed.savedPercent + "% (" + compressed.compressedKB + "KB)... Đang đọc AI";
 
-        const baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
-        const endpoint = baseUrl + "?key=" + encodeURIComponent(apiKey.trim());
-
+        const candidateModels = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
         const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD", "note": "tên cửa hàng và món chính"}';
 
         const payload = {
@@ -784,8 +912,8 @@
               { text: promptText },
               {
                 inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Data
+                  mimeType: compressed.mimeType,
+                  data: compressed.base64Data
                 }
               }
             ]
@@ -795,36 +923,72 @@
           }
         };
 
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        let lastErr = null;
+        let resData = null;
 
-        if (!res.ok) {
-          const errData = await res.json();
-          const msg = (errData.error && errData.error.message) ? errData.error.message : "Lỗi gọi Gemini API";
-          throw new Error(msg);
+        for (const model of candidateModels) {
+          const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey.trim());
+          try {
+            const res = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+              resData = await res.json();
+              break;
+            } else {
+              const errData = await res.json().catch(function() { return {}; });
+              const msg = (errData.error && errData.error.message) ? errData.error.message : ("HTTP " + res.status);
+              lastErr = new Error(msg);
+              // Nếu API key sai hoàn toàn thì dừng lại ngay để thông báo cho người dùng
+              if (res.status === 400 && msg.includes("API key not valid")) {
+                throw lastErr;
+              }
+            }
+          } catch (netErr) {
+            lastErr = netErr;
+            if (netErr.message && netErr.message.includes("API key not valid")) {
+              throw netErr;
+            }
+          }
         }
 
-        const resData = await res.json();
+        if (!resData) {
+          throw lastErr || new Error("Không thể kết nối đến Gemini API.");
+        }
+
         const rawText = resData.candidates[0].content.parts[0].text;
-        
         const startIdx = rawText.indexOf("{");
         const endIdx = rawText.lastIndexOf("}");
         const cleanJson = rawText.substring(startIdx, endIdx + 1);
         const parsed = JSON.parse(cleanJson);
 
-        if (parsed.amount) txAmount.value = parsed.amount;
-        if (parsed.date) txDate.value = parsed.date;
+        if (parsed.amount) {
+          const num = typeof parsed.amount === "number" ? parsed.amount : parseInt(String(parsed.amount).replace(/[^\d]/g, ""), 10);
+          if (!isNaN(num) && num > 0) txAmount.value = num;
+        }
+        if (parsed.date) {
+          txDate.value = parsed.date;
+        }
         if (parsed.note) txNote.value = parsed.note;
-        if (parsed.category) txCategory.value = parsed.category;
+        if (parsed.category) {
+          const validCats = ["Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc", "Lương", "Khác"];
+          if (validCats.indexOf(parsed.category) !== -1) {
+            txCategory.value = parsed.category;
+          } else {
+            txCategory.value = "Khác";
+          }
+        }
 
         btnTypeExpense.click();
+        delete scanStatus.dataset.scanning;
         scanStatus.innerText = "Quét Hóa Đơn (AI)";
-        alert("Đã đọc xong hóa đơn! Hãy kiểm tra lại thông tin rồi bấm Lưu Giao Dịch.");
+        alert("Đã đọc xong hóa đơn!\n• Nén Canvas: " + compressed.originalKB + "KB ➔ " + compressed.compressedKB + "KB (giảm " + compressed.savedPercent + "% payload)\n• Hãy kiểm tra lại thông tin rồi bấm Lưu Giao Dịch.");
       } catch (err) {
         console.error("Lỗi:", err);
+        delete scanStatus.dataset.scanning;
         alert("Lỗi quét hóa đơn: " + err.message);
         scanStatus.innerText = "Quét Hóa Đơn (AI)";
       } finally {
@@ -892,6 +1056,7 @@
           noBudgetInit: "Chưa đặt hạn mức",
           overBudget: "Vượt ngân sách: ",
           leftBudget: "Còn lại: ",
+          cardBalanceTitle: "Bấm để điều chỉnh số dư thực tế",
           cats: {
             "Ăn uống": "Ăn uống",
             "Mua sắm": "Mua sắm",
@@ -955,6 +1120,7 @@
           noBudgetInit: "No limit set",
           overBudget: "Over budget: ",
           leftBudget: "Remaining: ",
+          cardBalanceTitle: "Click to adjust actual balance",
           cats: {
             "Ăn uống": "Food & Dining",
             "Mua sắm": "Shopping",
@@ -1018,6 +1184,7 @@
           noBudgetInit: "上限未設定",
           overBudget: "予算超過: ",
           leftBudget: "残り: ",
+          cardBalanceTitle: "クリックして実際の残高を調整",
           cats: {
             "Ăn uống": "食費",
             "Mua sắm": "買い物",
@@ -1081,6 +1248,7 @@
           noBudgetInit: "ကန့်သတ်ချက် မရှိသေးပါ",
           overBudget: "ဘတ်ဂျက်ကျော်လွန်ငွေ: ",
           leftBudget: "လက်ကျန်: ",
+          cardBalanceTitle: "လက်ကျန်ငွေအမှန်ကို ချိန်ညှိရန် နှိပ်ပါ",
           cats: {
             "Ăn uống": "အစားအသောက်",
             "Mua sắm": "ဈေးဝယ်",
@@ -1174,7 +1342,10 @@
         const expEl = document.getElementById("totalExpense");
         if (expEl) setText(expEl.previousElementSibling, t.totalExpense);
         const balEl = document.getElementById("netBalance");
-        if (balEl) setText(balEl.previousElementSibling, t.netBalance);
+        const balLabel = document.getElementById("netBalanceLabel") || (balEl ? balEl.previousElementSibling : null);
+        if (balLabel) setText(balLabel, t.netBalance);
+        const cardBal = document.getElementById("cardBalance");
+        if (cardBal && t.cardBalanceTitle) cardBal.title = t.cardBalanceTitle;
 
         const txFormEl = document.getElementById("txForm");
         if (txFormEl) {
@@ -1182,9 +1353,8 @@
           setText(txSection.querySelector("h3"), t.recordTx);
 
           const scanStatusEl = document.getElementById("scanStatus");
-          if (scanStatusEl) {
-            const isScanning = scanStatusEl.innerText.includes("...");
-            setText(scanStatusEl, isScanning ? t.scanning : t.scanAi);
+          if (scanStatusEl && !scanStatusEl.dataset.scanning) {
+            setText(scanStatusEl, t.scanAi);
           }
 
           setText(document.getElementById("btnTypeExpense"), t.expenseBtn);
