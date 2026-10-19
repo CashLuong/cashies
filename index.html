@@ -832,5 +832,608 @@
       }
     });
   </script>
+<!-- ========================================== -->
+  <!-- MODULE ĐA NGÔN NGỮ (VI / EN / JA / MY)     -->
+  <!-- Chỉ cần dán ngay trước thẻ </body>         -->
+  <!-- ========================================== -->
+  <script>
+    (function() {
+      const i18n = {
+        vi: {
+          loginDesc: "Đăng nhập tài khoản Google để đồng bộ dữ liệu chi tiêu cá nhân.",
+          loginBtn: "Đăng nhập với Google",
+          appReady: "Hệ thống đã sẵn sàng ✓",
+          appInit: "Đang khởi tạo...",
+          connecting: "Đang kết nối...",
+          synced: "Đã đồng bộ",
+          syncErr: "Lỗi đồng bộ!",
+          keyTitle: "Cài đặt Gemini API Key",
+          logout: "Đăng xuất",
+          displayMonth: "Tháng hiển thị",
+          totalIncome: "Tổng Thu",
+          totalExpense: "Tổng Chi",
+          netBalance: "Số Dư",
+          recordTx: "Ghi nhận giao dịch",
+          scanAi: "Quét Hóa Đơn (AI)",
+          scanning: "Đang phân tích...",
+          expenseBtn: "Chi tiêu (-)",
+          incomeBtn: "Thu nhập (+)",
+          amountLbl: "Số tiền (¥)",
+          amountPh: "vd: 1200",
+          dateLbl: "Ngày giao dịch",
+          catLbl: "Danh mục",
+          noteLbl: "Ghi chú",
+          notePh: "vd: Siêu thị Gyomu, Bento...",
+          saveTx: "Lưu Giao Dịch",
+          savingTx: "Đang lưu...",
+          txHistory: "Lịch sử giao dịch",
+          noTx: "Không có giao dịch nào trong tháng này.",
+          chartTitle: "Tỷ lệ chi tiêu tháng",
+          debtBook: "Sổ Nợ (Việt Nam)",
+          debtSub: "Theo dõi nợ riêng bằng đơn vị VNĐ",
+          totalRemDebt: "Tổng nợ còn lại",
+          addNewDebt: "Thêm khoản nợ mới",
+          debtTitlePh: "Tên khoản nợ (vd: Vay ngân hàng)",
+          debtAmtPh: "Số tiền nợ gốc (VNĐ)",
+          debtNotePh: "Ghi chú / Hạn trả",
+          addDebtBtn: "+ Thêm khoản nợ",
+          addingDebt: "Đang thêm...",
+          noDebt: "Chưa có khoản nợ nào.",
+          noNote: "Không có ghi chú",
+          origDebt: "Gốc:",
+          paidDebt: "Đã trả:",
+          remDebt: "Còn:",
+          doneDebt: "Đã trả xong ✓",
+          payMoreBtn: "+ Trả bớt",
+          deleteBtn: "Xóa",
+          monthlyBudget: "Ngân sách tháng",
+          ceiling: "Trần:",
+          noBudget: "Chưa đặt ngân sách",
+          noBudgetInit: "Chưa đặt hạn mức",
+          overBudget: "Vượt ngân sách: ",
+          leftBudget: "Còn lại: ",
+          cats: {
+            "Ăn uống": "Ăn uống",
+            "Mua sắm": "Mua sắm",
+            "Đi lại": "Đi lại",
+            "Nhà cửa & Hóa đơn": "Nhà cửa & Hóa đơn",
+            "Học tập / Công việc": "Học tập / Công việc",
+            "Lương": "Lương",
+            "Khác": "Khác"
+          }
+        },
+        en: {
+          loginDesc: "Sign in with Google to sync your personal expense data.",
+          loginBtn: "Sign in with Google",
+          appReady: "System ready ✓",
+          appInit: "Initializing...",
+          connecting: "Connecting...",
+          synced: "Synced",
+          syncErr: "Sync error!",
+          keyTitle: "Configure Gemini API Key",
+          logout: "Logout",
+          displayMonth: "Display Month",
+          totalIncome: "Total Income",
+          totalExpense: "Total Expense",
+          netBalance: "Net Balance",
+          recordTx: "Record Transaction",
+          scanAi: "Scan Receipt (AI)",
+          scanning: "Analyzing...",
+          expenseBtn: "Expense (-)",
+          incomeBtn: "Income (+)",
+          amountLbl: "Amount (¥)",
+          amountPh: "e.g. 1200",
+          dateLbl: "Transaction Date",
+          catLbl: "Category",
+          noteLbl: "Note",
+          notePh: "e.g. Supermarket, Bento...",
+          saveTx: "Save Transaction",
+          savingTx: "Saving...",
+          txHistory: "Transaction History",
+          noTx: "No transactions this month.",
+          chartTitle: "Monthly Expense Ratio",
+          debtBook: "Debt Book (VND)",
+          debtSub: "Track separate debts in VND",
+          totalRemDebt: "Total Remaining Debt",
+          addNewDebt: "Add New Debt",
+          debtTitlePh: "Debt name (e.g. Bank loan)",
+          debtAmtPh: "Principal amount (VND)",
+          debtNotePh: "Note / Due date",
+          addDebtBtn: "+ Add Debt",
+          addingDebt: "Adding...",
+          noDebt: "No debts recorded yet.",
+          noNote: "No note",
+          origDebt: "Principal:",
+          paidDebt: "Paid:",
+          remDebt: "Left:",
+          doneDebt: "Paid off ✓",
+          payMoreBtn: "+ Pay part",
+          deleteBtn: "Delete",
+          monthlyBudget: "Monthly Budget",
+          ceiling: "Limit:",
+          noBudget: "No budget set",
+          noBudgetInit: "No limit set",
+          overBudget: "Over budget: ",
+          leftBudget: "Remaining: ",
+          cats: {
+            "Ăn uống": "Food & Dining",
+            "Mua sắm": "Shopping",
+            "Đi lại": "Transportation",
+            "Nhà cửa & Hóa đơn": "Housing & Bills",
+            "Học tập / Công việc": "Study / Work",
+            "Lương": "Salary",
+            "Khác": "Others"
+          }
+        },
+        ja: {
+          loginDesc: "Googleアカウントでログインして収支データを同期します。",
+          loginBtn: "Googleでログイン",
+          appReady: "システム準備完了 ✓",
+          appInit: "初期化中...",
+          connecting: "接続中...",
+          synced: "同期済み",
+          syncErr: "同期エラー！",
+          keyTitle: "Gemini APIキー設定",
+          logout: "ログアウト",
+          displayMonth: "表示月",
+          totalIncome: "総収入",
+          totalExpense: "総支出",
+          netBalance: "残高",
+          recordTx: "取引を記録",
+          scanAi: "レシート読取 (AI)",
+          scanning: "解析中...",
+          expenseBtn: "支出 (-)",
+          incomeBtn: "収入 (+)",
+          amountLbl: "金額 (¥)",
+          amountPh: "例: 1200",
+          dateLbl: "取引日",
+          catLbl: "カテゴリー",
+          noteLbl: "メモ",
+          notePh: "例: 業務スーパー、弁当...",
+          saveTx: "取引を保存",
+          savingTx: "保存中...",
+          txHistory: "取引履歴",
+          noTx: "今月の取引はありません。",
+          chartTitle: "月間支出の割合",
+          debtBook: "借入金帳簿 (VND)",
+          debtSub: "VND単位で個別に借入を管理",
+          totalRemDebt: "残りの借入総額",
+          addNewDebt: "新しい借入を追加",
+          debtTitlePh: "借入名 (例: 銀行ローン)",
+          debtAmtPh: "元金 (VND)",
+          debtNotePh: "メモ / 返済期限",
+          addDebtBtn: "+ 借入を追加",
+          addingDebt: "追加中...",
+          noDebt: "借入の記録はありません。",
+          noNote: "メモなし",
+          origDebt: "元金:",
+          paidDebt: "返済済:",
+          remDebt: "残り:",
+          doneDebt: "完済 ✓",
+          payMoreBtn: "+ 一部返済",
+          deleteBtn: "削除",
+          monthlyBudget: "月間予算",
+          ceiling: "上限:",
+          noBudget: "予算未設定",
+          noBudgetInit: "上限未設定",
+          overBudget: "予算超過: ",
+          leftBudget: "残り: ",
+          cats: {
+            "Ăn uống": "食費",
+            "Mua sắm": "買い物",
+            "Đi lại": "交通費",
+            "Nhà cửa & Hóa đơn": "住居・光熱費",
+            "Học tập / Công việc": "学習・仕事",
+            "Lương": "給与",
+            "Khác": "その他"
+          }
+        },
+        my: {
+          loginDesc: "သင့်အသုံးစရိတ်ဒေတာကို ချိတ်ဆက်ရန် Google အကောင့်ဖြင့် ဝင်ရောက်ပါ။",
+          loginBtn: "Google ဖြင့် ဝင်ရောက်ပါ",
+          appReady: "စနစ်အသင့်ဖြစ်ပါပြီ ✓",
+          appInit: "စတင်နေသည်...",
+          connecting: "ချိတ်ဆက်နေသည်...",
+          synced: "ချိတ်ဆက်ပြီး",
+          syncErr: "ချိတ်ဆက်မှု အမှား!",
+          keyTitle: "Gemini API Key သတ်မှတ်ရန်",
+          logout: "ထွက်ရန်",
+          displayMonth: "ပြသမည့်လ",
+          totalIncome: "စုစုပေါင်းဝင်ငွေ",
+          totalExpense: "စုစုပေါင်းထွက်ငွေ",
+          netBalance: "လက်ကျန်ငွေ",
+          recordTx: "စာရင်းမှတ်ရန်",
+          scanAi: "ဘောင်ချာဖတ်ရန် (AI)",
+          scanning: "စစ်ဆေးနေသည်...",
+          expenseBtn: "အသုံးစရိတ် (-)",
+          incomeBtn: "ဝင်ငွေ (+)",
+          amountLbl: "ပမာဏ (¥)",
+          amountPh: "ဥပမာ- 1200",
+          dateLbl: "နေ့စွဲ",
+          catLbl: "အမျိုးအစား",
+          noteLbl: "မှတ်ချက်",
+          notePh: "ဥပမာ- စူပါမားကတ်၊ ထမင်းဘူး...",
+          saveTx: "စာရင်းသိမ်းရန်",
+          savingTx: "သိမ်းနေသည်...",
+          txHistory: "စာရင်းမှတ်တမ်း",
+          noTx: "ဤလအတွက် စာရင်းမရှိပါ။",
+          chartTitle: "လစဉ် အသုံးစရိတ် အချိုးအစား",
+          debtBook: "အကြွေးစာအုပ် (VND)",
+          debtSub: "VND ဖြင့် အကြွေးစာရင်း သီးသန့်မှတ်ရန်",
+          totalRemDebt: "ကျန်ရှိသော အကြွေးစုစုပေါင်း",
+          addNewDebt: "အကြွေးအသစ်ထည့်ရန်",
+          debtTitlePh: "အကြွေးအမည် (ဥပမာ- ဘဏ်ချေးငွေ)",
+          debtAmtPh: "မူလအကြွေးပမာဏ (VND)",
+          debtNotePh: "မှတ်ချက် / ဆပ်ရမည့်ရက်",
+          addDebtBtn: "+ အကြွေးထည့်ရန်",
+          addingDebt: "ထည့်နေသည်...",
+          noDebt: "အကြွေးစာရင်း မရှိသေးပါ။",
+          noNote: "မှတ်ချက်မရှိပါ",
+          origDebt: "မူလ:",
+          paidDebt: "ဆပ်ပြီး:",
+          remDebt: "ကျန်ငွေ:",
+          doneDebt: "ဆပ်ပြီး ✓",
+          payMoreBtn: "+ ခွဲဆပ်ရန်",
+          deleteBtn: "ဖျက်ရန်",
+          monthlyBudget: "လစဉ်ဘတ်ဂျက်",
+          ceiling: "ကန့်သတ်ချက်:",
+          noBudget: "ဘတ်ဂျက် မသတ်မှတ်ရသေးပါ",
+          noBudgetInit: "ကန့်သတ်ချက် မရှိသေးပါ",
+          overBudget: "ဘတ်ဂျက်ကျော်လွန်ငွေ: ",
+          leftBudget: "လက်ကျန်: ",
+          cats: {
+            "Ăn uống": "အစားအသောက်",
+            "Mua sắm": "ဈေးဝယ်",
+            "Đi lại": "သွားလာရေး",
+            "Nhà cửa & Hóa đơn": "နေထိုင်မှုနှင့် မီတာခ",
+            "Học tập / Công việc": "ပညာရေး / အလုပ်",
+            "Lương": "လစာ",
+            "Khác": "အခြား"
+          }
+        }
+      };
+
+      let currentLang = localStorage.getItem("CASHIES_LANG") || "vi";
+
+      // 1. Tự động gắn nút chọn ngôn ngữ vào Header & Màn hình Login
+      function injectLanguageSelectors() {
+        const headerBtnGroup = document.querySelector("#appView header > div:last-child");
+        if (headerBtnGroup && !document.getElementById("langSwitcher")) {
+          const select = document.createElement("select");
+          select.id = "langSwitcher";
+          select.className = "text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1.5 rounded-lg font-medium transition cursor-pointer focus:outline-none";
+          select.innerHTML = `
+            <option value="vi">🇻🇳 VI</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="ja">🇯🇵 JA</option>
+            <option value="my">🇲🇲 MY</option>
+          `;
+          select.value = currentLang;
+          select.addEventListener("change", (e) => setLanguage(e.target.value));
+          headerBtnGroup.insertBefore(select, headerBtnGroup.firstChild);
+        }
+
+        const loginCard = document.querySelector("#loginView > div");
+        if (loginCard && !document.getElementById("langSwitcherLogin")) {
+          const selectLogin = document.createElement("select");
+          selectLogin.id = "langSwitcherLogin";
+          selectLogin.className = "mt-4 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition cursor-pointer focus:outline-none";
+          selectLogin.innerHTML = `
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="my">🇲🇲 မြန်မာ</option>
+          `;
+          selectLogin.value = currentLang;
+          selectLogin.addEventListener("change", (e) => setLanguage(e.target.value));
+          loginCard.appendChild(selectLogin);
+        }
+      }
+
+      // 2. Dịch toàn bộ văn bản tĩnh trên giao diện
+      function translateStaticUI() {
+        const t = i18n[currentLang];
+        if (!t) return;
+
+        // Màn hình đăng nhập
+        const loginDesc = document.querySelector("#loginView p.text-sm.text-slate-500");
+        if (loginDesc) loginDesc.innerText = t.loginDesc;
+        const loginSpan = document.querySelector("#btnLogin span");
+        if (loginSpan) loginSpan.innerText = t.loginBtn;
+        const appStatusEl = document.getElementById("appStatus");
+        if (appStatusEl) {
+          appStatusEl.innerText = appStatusEl.innerText.includes("✓") || appStatusEl.innerText.includes("ready") || appStatusEl.innerText.includes("完了") || appStatusEl.innerText.includes("ပြီ") ? t.appReady : t.appInit;
+        }
+
+        // Thanh Header
+        const btnConfigKey = document.getElementById("btnConfigKey");
+        if (btnConfigKey) btnConfigKey.title = t.keyTitle;
+        const btnLogout = document.getElementById("btnLogout");
+        if (btnLogout) btnLogout.innerText = t.logout;
+
+        // Bộ lọc tháng
+        const monthInput = document.getElementById("filterMonth");
+        if (monthInput && monthInput.previousElementSibling) {
+          monthInput.previousElementSibling.innerText = t.displayMonth;
+        }
+
+        // 3 thẻ Tổng Thu - Chi - Số Dư
+        const incEl = document.getElementById("totalIncome");
+        if (incEl && incEl.previousElementSibling) incEl.previousElementSibling.innerText = t.totalIncome;
+        const expEl = document.getElementById("totalExpense");
+        if (expEl && expEl.previousElementSibling) expEl.previousElementSibling.innerText = t.totalExpense;
+        const balEl = document.getElementById("netBalance");
+        if (balEl && balEl.previousElementSibling) balEl.previousElementSibling.innerText = t.netBalance;
+
+        // Form ghi nhận giao dịch
+        const txFormEl = document.getElementById("txForm");
+        if (txFormEl) {
+          const txSection = txFormEl.parentElement;
+          const h3 = txSection.querySelector("h3");
+          if (h3) h3.innerText = t.recordTx;
+
+          const scanStatusEl = document.getElementById("scanStatus");
+          if (scanStatusEl) {
+            const isScanning = scanStatusEl.innerText.includes("...");
+            scanStatusEl.innerText = isScanning ? t.scanning : t.scanAi;
+          }
+
+          document.getElementById("btnTypeExpense").innerText = t.expenseBtn;
+          document.getElementById("btnTypeIncome").innerText = t.incomeBtn;
+
+          const amtInput = document.getElementById("txAmount");
+          if (amtInput) {
+            if (amtInput.previousElementSibling) amtInput.previousElementSibling.innerText = t.amountLbl;
+            amtInput.placeholder = t.amountPh;
+          }
+
+          const dateInput = document.getElementById("txDate");
+          if (dateInput && dateInput.previousElementSibling) {
+            dateInput.previousElementSibling.innerText = t.dateLbl;
+          }
+
+          const catSelect = document.getElementById("txCategory");
+          if (catSelect) {
+            if (catSelect.previousElementSibling) catSelect.previousElementSibling.innerText = t.catLbl;
+            Array.from(catSelect.options).forEach(opt => {
+              if (t.cats[opt.value]) opt.innerText = t.cats[opt.value];
+            });
+          }
+
+          const noteInput = document.getElementById("txNote");
+          if (noteInput) {
+            if (noteInput.previousElementSibling) noteInput.previousElementSibling.innerText = t.noteLbl;
+            noteInput.placeholder = t.notePh;
+          }
+
+          const btnSubmitTx = document.getElementById("btnSubmitTx");
+          if (btnSubmitTx) {
+            btnSubmitTx.innerText = btnSubmitTx.disabled ? t.savingTx : t.saveTx;
+          }
+        }
+
+        // Lịch sử giao dịch & Biểu đồ
+        const txListEl = document.getElementById("txList");
+        if (txListEl && txListEl.previousElementSibling) {
+          txListEl.previousElementSibling.innerText = t.txHistory;
+        }
+        const chartCanvas = document.getElementById("categoryChart");
+        if (chartCanvas) {
+          const chartSection = chartCanvas.closest("section");
+          const h3 = chartSection ? chartSection.querySelector("h3") : null;
+          if (h3) h3.innerText = t.chartTitle;
+        }
+
+        // Sổ nợ
+        const debtFormEl = document.getElementById("debtForm");
+        if (debtFormEl) {
+          const debtSection = debtFormEl.parentElement;
+          const h3 = debtSection.querySelector("h3");
+          if (h3) {
+            h3.innerText = t.debtBook;
+            if (h3.nextElementSibling) h3.nextElementSibling.innerText = t.debtSub;
+          }
+          const remDebtEl = document.getElementById("totalRemainingDebt");
+          if (remDebtEl && remDebtEl.previousElementSibling) {
+            remDebtEl.previousElementSibling.innerText = t.totalRemDebt;
+          }
+
+          const formTitle = debtFormEl.querySelector("p");
+          if (formTitle) formTitle.innerText = t.addNewDebt;
+
+          const debtTitle = document.getElementById("debtTitle");
+          if (debtTitle) debtTitle.placeholder = t.debtTitlePh;
+          const debtAmount = document.getElementById("debtAmount");
+          if (debtAmount) debtAmount.placeholder = t.debtAmtPh;
+          const debtNote = document.getElementById("debtNote");
+          if (debtNote) debtNote.placeholder = t.debtNotePh;
+
+          const btnSubmitDebt = document.getElementById("btnSubmitDebt");
+          if (btnSubmitDebt) {
+            btnSubmitDebt.innerText = btnSubmitDebt.disabled ? t.addingDebt : t.addDebtBtn;
+          }
+        }
+
+        // Ngân sách tháng
+        const btnSetBudget = document.getElementById("btnSetBudget");
+        if (btnSetBudget) {
+          if (btnSetBudget.previousElementSibling) btnSetBudget.previousElementSibling.innerText = t.ceiling;
+          const budgetHeader = btnSetBudget.parentElement.previousElementSibling;
+          if (budgetHeader) budgetHeader.innerText = t.monthlyBudget;
+        }
+      }
+
+      // 3. Dịch các thành phần sinh động từ Firestore (Lịch sử, Sổ nợ, Biểu đồ, Badge)
+      let isTranslatingDynamic = false;
+      function translateDynamicUI() {
+        if (isTranslatingDynamic) return;
+        isTranslatingDynamic = true;
+        const t = i18n[currentLang];
+
+        try {
+          // Badge đồng bộ
+          const syncBadge = document.getElementById("syncBadge");
+          if (syncBadge) {
+            const match = syncBadge.innerText.match(/\((\d+)\)/);
+            if (match) {
+              syncBadge.innerText = `${t.synced} (${match[1]})`;
+            } else if (syncBadge.className.includes("rose")) {
+              syncBadge.innerText = t.syncErr;
+            } else {
+              syncBadge.innerText = t.connecting;
+            }
+          }
+
+          // Danh sách giao dịch
+          const txListEl = document.getElementById("txList");
+          if (txListEl) {
+            const emptyMsg = txListEl.querySelector("p.text-center");
+            if (emptyMsg) {
+              emptyMsg.innerText = t.noTx;
+            } else {
+              const items = txListEl.querySelectorAll("div.py-2\\.5 p.font-semibold");
+              items.forEach(p => {
+                if (p.firstChild && p.firstChild.nodeType === Node.TEXT_NODE) {
+                  const rawCat = p.firstChild.nodeValue.trim();
+                  // Tìm key gốc tiếng Việt nếu đã bị dịch trước đó
+                  let viKey = Object.keys(i18n.vi.cats).find(k => 
+                    k === rawCat || i18n.en.cats[k] === rawCat || i18n.ja.cats[k] === rawCat || i18n.my.cats[k] === rawCat
+                  );
+                  if (viKey && t.cats[viKey]) {
+                    p.firstChild.nodeValue = t.cats[viKey];
+                  }
+                }
+              });
+            }
+          }
+
+          // Danh sách Sổ Nợ
+          const debtListEl = document.getElementById("debtList");
+          if (debtListEl) {
+            const emptyMsg = debtListEl.querySelector("p.text-center");
+            if (emptyMsg) {
+              emptyMsg.innerText = t.noDebt;
+            } else {
+              debtListEl.querySelectorAll(":scope > div").forEach(card => {
+                // Ghi chú & Gốc
+                const subInfo = card.querySelector("div.flex > div:first-child > p:last-child");
+                if (subInfo) {
+                  let txt = subInfo.innerText;
+                  ["Không có ghi chú", "No note", "メモなし", "မှတ်ချက်မရှိပါ"].forEach(s => {
+                    txt = txt.replace(s, t.noNote);
+                  });
+                  ["Gốc:", "Principal:", "元金:", "မူလ:"].forEach(s => {
+                    txt = txt.replace(s, t.origDebt);
+                  });
+                  subInfo.innerText = txt;
+                }
+                // Trạng thái Còn / Đã trả xong
+                const statusP = card.querySelector("div.text-right > p");
+                if (statusP) {
+                  if (statusP.innerText.includes("✓")) {
+                    statusP.innerText = t.doneDebt;
+                  } else {
+                    let sTxt = statusP.innerText;
+                    ["Còn:", "Left:", "残り:", "ကျန်ငွေ:"].forEach(s => {
+                      sTxt = sTxt.replace(s, t.remDebt);
+                    });
+                    statusP.innerText = sTxt;
+                  }
+                }
+                // Đã trả
+                const paidSpan = card.querySelector("div.text-right > span");
+                if (paidSpan) {
+                  let pTxt = paidSpan.innerText;
+                  ["Đã trả:", "Paid:", "返済済:", "ဆပ်ပြီး:"].forEach(s => {
+                    pTxt = pTxt.replace(s, t.paidDebt);
+                  });
+                  paidSpan.innerText = pTxt;
+                }
+                // Các nút bấm
+                const btns = card.querySelectorAll("button");
+                btns.forEach(btn => {
+                  const bTxt = btn.innerText.trim();
+                  if (bTxt.startsWith("+")) btn.innerText = t.payMoreBtn;
+                  else btn.innerText = t.deleteBtn;
+                });
+              });
+            }
+          }
+
+          // Trạng thái Ngân sách
+          const budgetStatus = document.getElementById("budgetStatus");
+          if (budgetStatus) {
+            let bTxt = budgetStatus.innerText;
+            if (bTxt.includes(":")) {
+              const amountPart = bTxt.split(":")[1].trim();
+              const progress = document.getElementById("budgetProgress");
+              if (progress && progress.className.includes("rose")) {
+                budgetStatus.innerText = t.overBudget + amountPart;
+              } else {
+                budgetStatus.innerText = t.leftBudget + amountPart;
+              }
+            } else {
+              budgetStatus.innerText = t.noBudget;
+            }
+          }
+
+          // Biểu đồ Chart.js
+          if (typeof chartInstance !== "undefined" && chartInstance && chartInstance.data && chartInstance.data.labels) {
+            let updated = false;
+            chartInstance.data.labels = chartInstance.data.labels.map(lbl => {
+              let viKey = Object.keys(i18n.vi.cats).find(k => 
+                k === lbl || i18n.en.cats[k] === lbl || i18n.ja.cats[k] === lbl || i18n.my.cats[k] === lbl
+              );
+              if (viKey && t.cats[viKey] && lbl !== t.cats[viKey]) {
+                updated = true;
+                return t.cats[viKey];
+              }
+              return lbl;
+            });
+            if (updated) chartInstance.update();
+          }
+        } finally {
+          isTranslatingDynamic = false;
+        }
+      }
+
+      // 4. Hàm kích hoạt chuyển đổi ngôn ngữ
+      function setLanguage(lang) {
+        if (!i18n[lang]) return;
+        currentLang = lang;
+        localStorage.setItem("CASHIES_LANG", lang);
+
+        const s1 = document.getElementById("langSwitcher");
+        if (s1) s1.value = lang;
+        const s2 = document.getElementById("langSwitcherLogin");
+        if (s2) s2.value = lang;
+
+        translateStaticUI();
+        translateDynamicUI();
+      }
+
+      // 5. Khởi chạy và lắng nghe sự kiện thay đổi DOM
+      function initI18n() {
+        injectLanguageSelectors();
+        setLanguage(currentLang);
+
+        const observer = new MutationObserver(() => {
+          translateDynamicUI();
+          translateStaticUI();
+        });
+
+        ["txList", "debtList", "syncBadge", "budgetStatus", "scanStatus", "btnSubmitTx", "btnSubmitDebt"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) observer.observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
+        });
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initI18n);
+      } else {
+        initI18n();
+      }
+    })();
+  </script>
 </body>
 </html>
