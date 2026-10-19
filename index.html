@@ -769,7 +769,7 @@
         const compressedDataUrl = await compressImage(file, 800, 0.7);
         const base64Data = compressedDataUrl.split(",")[1];
 
-        const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+        const endpoint = "https://generativelanguage.googleapis.com/v1beta/modelsgemini-3.8-flash:generateContent?key=" + apiKey;
 
         const promptText = 'Phân tích hóa đơn này và trả về đúng định dạng JSON thuần: {"amount": number, "category": "Ăn uống" hoặc "Mua sắm" hoặc "Đi lại" hoặc "Nhà cửa & Hóa đơn" hoặc "Học tập / Công việc" hoặc "Khác", "date": "YYYY-MM-DD", "note": "tên cửa hàng và món chính"}';
 
