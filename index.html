@@ -16,6 +16,42 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* Thanh cuộn tối giản cho danh sách giao dịch & container cuộn */
+    #txList::-webkit-scrollbar,
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    #txList::-webkit-scrollbar-track,
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #txList::-webkit-scrollbar-thumb,
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    #txList::-webkit-scrollbar-thumb:hover,
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Tối ưu hóa đặc thù cho Mobile Landscape (Màn hình ngang điện thoại có chiều cao thấp) */
+    @media (orientation: landscape) and (max-height: 550px) {
+      body {
+        padding-bottom: 1.5rem !important;
+      }
+      .mobile-landscape-compact {
+        padding-top: 0.75rem !important;
+        gap: 0.75rem !important;
+      }
+      .mobile-landscape-chart {
+        height: 11rem !important;
+      }
+    }
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-12">
 
@@ -41,16 +77,22 @@
   </div>
 
   <!-- Giao diện Chính -->
-  <div id="appView" class="hidden max-w-xl mx-auto px-4 pt-6 space-y-5">
+  <div id="appView" class="hidden w-full max-w-xl md:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-4 sm:space-y-6 transition-all duration-200">
     
     <!-- Top Bar -->
-    <header class="flex items-center justify-between pb-2 border-b border-slate-200">
-      <div>
-        <div class="flex items-center gap-2">
-          <h2 class="text-xs uppercase tracking-wider text-indigo-600 font-bold">Cashies</h2>
-          <span id="syncBadge" class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">Đang kết nối...</span>
+    <header class="flex items-center justify-between pb-3 border-b border-slate-200">
+      <div class="flex items-center gap-2.5 sm:gap-3">
+        <div class="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center text-lg shadow-2xs">
+          💴
         </div>
-        <p id="userGreeting" class="font-bold text-slate-800 text-base"></p>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-xs uppercase tracking-wider text-indigo-600 font-bold">Cashies</h2>
+            <span id="syncBadge" class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">Đang kết nối...</span>
+            <span id="deviceBadge" class="inline-flex items-center gap-1 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium cursor-default"></span>
+          </div>
+          <p id="userGreeting" class="font-bold text-slate-800 text-sm sm:text-base"></p>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <button id="btnConfigKey" title="Cài đặt Gemini API Key" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg font-medium transition">
@@ -62,155 +104,171 @@
       </div>
     </header>
 
-    <!-- 1. THÁNG HIỂN THỊ -->
-    <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
-      <span class="text-xs font-semibold text-slate-500 uppercase">Tháng hiển thị</span>
-      <input type="month" id="filterMonth" class="text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-slate-400">
+    <!-- 1 & 2. THANH THÁNG HIỂN THỊ & 3 THẺ TỔNG QUAN TÀI CHÍNH -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 landscape:grid-cols-12 gap-3 sm:gap-4 items-stretch">
+      <!-- 1. THÁNG HIỂN THỊ -->
+      <div class="lg:col-span-4 landscape:col-span-4 flex items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs h-full">
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tháng hiển thị</span>
+        <input type="month" id="filterMonth" class="text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer">
+      </div>
+
+      <!-- 2. TỔNG THU - CHI, SỐ DƯ -->
+      <section class="lg:col-span-8 landscape:col-span-8 grid grid-cols-3 gap-2 sm:gap-3">
+        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+          <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
+          <p id="totalIncome" class="text-sm sm:text-base lg:text-lg font-bold text-emerald-600 mt-1 truncate">¥0</p>
+        </div>
+        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+          <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
+          <p id="totalExpense" class="text-sm sm:text-base lg:text-lg font-bold text-rose-600 mt-1 truncate">¥0</p>
+        </div>
+        <div id="cardBalance" class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all duration-150 group" title="Bấm để điều chỉnh số dư thực tế">
+          <div class="flex items-center justify-between">
+            <p id="netBalanceLabel" class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
+            <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+          </div>
+          <p id="netBalance" class="text-sm sm:text-base lg:text-lg font-bold text-slate-800 mt-1 truncate">¥0</p>
+        </div>
+      </section>
     </div>
 
-    <!-- 2. TỔNG THU - CHI, SỐ DƯ -->
-    <section class="grid grid-cols-3 gap-2.5">
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-        <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
-        <p id="totalIncome" class="text-base font-bold text-emerald-600 mt-1">¥0</p>
-      </div>
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-        <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
-        <p id="totalExpense" class="text-base font-bold text-rose-600 mt-1">¥0</p>
-      </div>
-      <div id="cardBalance" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all duration-150 group" title="Bấm để điều chỉnh số dư thực tế">
-        <div class="flex items-center justify-between">
-          <p id="netBalanceLabel" class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
-          <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-          </svg>
-        </div>
-        <p id="netBalance" class="text-base font-bold text-slate-800 mt-1">¥0</p>
-      </div>
-    </section>
+    <!-- KHỐI 2 CỘT CHÍNH: CỘT TRÁI (NHẬP LIỆU & NGÂN SÁCH) - CỘT PHẢI (BIỂU ĐỒ & LỊCH SỬ) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 landscape:grid-cols-2 gap-4 lg:gap-6 items-start">
 
-    <!-- 3. GHI NHẬN GIAO DỊCH -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-        <h3 class="font-bold text-sm text-slate-800">Ghi nhận giao dịch</h3>
-        
-        <label class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          <span id="scanStatus">Quét Hóa Đơn (AI)</span>
-          <input type="file" id="receiptInput" accept="image/*" class="hidden">
-        </label>
-      </div>
+      <!-- CỘT TRÁI (6 cols trên Desktop, 1 col trên Landscape) -->
+      <div class="lg:col-span-6 space-y-4 sm:space-y-5">
 
-      <form id="txForm" class="space-y-3">
-        <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-          <button type="button" id="btnTypeExpense" class="py-1.5 rounded-lg bg-white shadow-xs text-rose-600 transition">Chi tiêu (-)</button>
-          <button type="button" id="btnTypeIncome" class="py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition">Thu nhập (+)</button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Số tiền (¥)</label>
-            <input type="number" id="txAmount" placeholder="vd: 1200" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+        <!-- 3. GHI NHẬN GIAO DỊCH -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h3 class="font-bold text-sm text-slate-800">Ghi nhận giao dịch</h3>
+            
+            <label class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span id="scanStatus">Quét Hóa Đơn (AI)</span>
+              <input type="file" id="receiptInput" accept="image/*" class="hidden">
+            </label>
           </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ngày giao dịch</label>
-            <input type="date" id="txDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+
+          <form id="txForm" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              <button type="button" id="btnTypeExpense" class="py-1.5 rounded-lg bg-white shadow-xs text-rose-600 transition">Chi tiêu (-)</button>
+              <button type="button" id="btnTypeIncome" class="py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition">Thu nhập (+)</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Số tiền (¥)</label>
+                <input type="number" id="txAmount" placeholder="vd: 1200" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ngày giao dịch</label>
+                <input type="date" id="txDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Danh mục</label>
+                <select id="txCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+                  <option value="Ăn uống">Ăn uống</option>
+                  <option value="Mua sắm">Mua sắm</option>
+                  <option value="Đi lại">Đi lại</option>
+                  <option value="Nhà cửa & Hóa đơn">Nhà cửa & Hóa đơn</option>
+                  <option value="Học tập / Công việc">Học tập / Công việc</option>
+                  <option value="Lương">Lương</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ghi chú</label>
+                <input type="text" id="txNote" placeholder="vd: Siêu thị Gyomu, Bento..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+              </div>
+            </div>
+
+            <button type="submit" id="btnSubmitTx" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-sm transition">
+              Lưu Giao Dịch
+            </button>
+          </form>
+        </section>
+
+        <!-- 7. TỔNG NGÂN SÁCH THÁNG -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-700">Ngân sách tháng</span>
+            <div class="flex items-center gap-1">
+              <span class="text-slate-400">Trần:</span>
+              <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
+                <span id="budgetDisplay">¥0</span>
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Danh mục</label>
-            <select id="txCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
-              <option value="Ăn uống">Ăn uống</option>
-              <option value="Mua sắm">Mua sắm</option>
-              <option value="Đi lại">Đi lại</option>
-              <option value="Nhà cửa & Hóa đơn">Nhà cửa & Hóa đơn</option>
-              <option value="Học tập / Công việc">Học tập / Công việc</option>
-              <option value="Lương">Lương</option>
-              <option value="Khác">Khác</option>
-            </select>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
           </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ghi chú</label>
-            <input type="text" id="txNote" placeholder="vd: Siêu thị Gyomu, Bento..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span id="budgetStatus">Chưa đặt hạn mức</span>
+            <span id="budgetPercent">0%</span>
           </div>
-        </div>
+        </section>
 
-        <button type="submit" id="btnSubmitTx" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-sm transition">
-          Lưu Giao Dịch
-        </button>
-      </form>
-    </section>
-
-    <!-- 4. LỊCH SỬ GIAO DỊCH -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-      <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
-      <div id="txList" class="divide-y divide-slate-100 text-sm"></div>
-    </section>
-
-    <!-- 5. TỶ LỆ CHI TIÊU THÁNG -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-      <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
-      <div class="h-48 flex items-center justify-center">
-        <canvas id="categoryChart"></canvas>
       </div>
-    </section>
 
-    <!-- 6. SỔ NỢ -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+      <!-- CỘT PHẢI (6 cols trên Desktop, 1 col trên Landscape) -->
+      <div class="lg:col-span-6 space-y-4 sm:space-y-5">
+
+        <!-- 5. TỶ LỆ CHI TIÊU THÁNG -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+          <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
+          <div class="h-48 sm:h-52 lg:h-60 mobile-landscape-chart flex items-center justify-center">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </section>
+
+        <!-- 4. LỊCH SỬ GIAO DỊCH -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <h3 class="font-bold text-sm text-slate-800">Lịch sử giao dịch</h3>
+          <div id="txList" class="divide-y divide-slate-100 text-sm max-h-[350px] sm:max-h-[380px] lg:max-h-[420px] overflow-y-auto pr-1"></div>
+        </section>
+
+      </div>
+
+    </div>
+
+    <!-- 6. SỔ NỢ (VIỆT NAM) -->
+    <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <div>
           <h3 class="font-bold text-sm text-slate-800">Sổ Nợ (Việt Nam)</h3>
           <p class="text-[11px] text-slate-400">Theo dõi nợ riêng bằng đơn vị VNĐ</p>
         </div>
         <div class="text-right">
           <span class="text-[10px] text-slate-400 font-medium">Tổng nợ còn lại</span>
-          <p id="totalRemainingDebt" class="text-sm font-bold text-rose-600">0 ₫</p>
+          <p id="totalRemainingDebt" class="text-sm sm:text-base font-bold text-rose-600">0 ₫</p>
         </div>
       </div>
 
-      <form id="debtForm" class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+      <form id="debtForm" class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-2.5">
         <p class="text-xs font-semibold text-slate-600">Thêm khoản nợ mới</p>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <input type="text" id="debtTitle" placeholder="Tên khoản nợ (vd: Vay ngân hàng)" required 
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
           <input type="number" id="debtAmount" placeholder="Số tiền nợ gốc (VNĐ)" required 
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
           <input type="text" id="debtNote" placeholder="Ghi chú / Hạn trả" 
-            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
-          <button type="submit" id="btnSubmitDebt" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition">
+            class="bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+          <button type="submit" id="btnSubmitDebt" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg text-xs transition">
             + Thêm khoản nợ
           </button>
         </div>
       </form>
 
-      <div id="debtList" class="space-y-2.5"></div>
-    </section>
-
-    <!-- 7. TỔNG NGÂN SÁCH THÁNG -->
-    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-      <div class="flex items-center justify-between text-xs">
-        <span class="font-semibold text-slate-700">Ngân sách tháng</span>
-        <div class="flex items-center gap-1">
-          <span class="text-slate-400">Trần:</span>
-          <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
-            <span id="budgetDisplay">¥0</span>
-          </button>
-        </div>
-      </div>
-      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-        <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-      </div>
-      <div class="flex justify-between text-[11px] text-slate-400">
-        <span id="budgetStatus">Chưa đặt hạn mức</span>
-        <span id="budgetPercent">0%</span>
-      </div>
+      <div id="debtList" class="space-y-2.5 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3"></div>
     </section>
 
   </div>
@@ -299,6 +357,64 @@
     if (appStatus) {
       appStatus.innerText = "Hệ thống đã sẵn sàng ✓";
     }
+
+    // ==========================================
+    // 2.1 TỰ ĐỘNG THÍCH ỨNG THIẾT BỊ (RESPONSIVE ENGINE)
+    // ==========================================
+    const deviceBadge = document.getElementById("deviceBadge");
+
+    function detectAndApplyDeviceLayout() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isLandscape = window.matchMedia("(orientation: landscape)").matches || (w > h && w >= 560);
+      
+      let deviceMode = "desktop";
+      let deviceLabel = "Desktop";
+      let deviceIcon = "🖥️";
+
+      if (w < 640 && !isLandscape) {
+        deviceMode = "mobile-portrait";
+        deviceLabel = "Mobile Dọc";
+        deviceIcon = "📱";
+      } else if (isLandscape && h <= 550) {
+        deviceMode = "mobile-landscape";
+        deviceLabel = "Mobile Ngang";
+        deviceIcon = "🔄";
+      } else if (w < 1024) {
+        deviceMode = isLandscape ? "tablet-landscape" : "tablet-portrait";
+        deviceLabel = isLandscape ? "Tablet Ngang" : "Tablet Dọc";
+        deviceIcon = "💻";
+      }
+
+      document.body.setAttribute("data-device-mode", deviceMode);
+
+      if (deviceBadge) {
+        const lang = localStorage.getItem("CASHIES_LANG") || "vi";
+        const labelsMap = {
+          vi: { desktop: "Desktop", "mobile-portrait": "Mobile Dọc", "mobile-landscape": "Mobile Ngang", "tablet-landscape": "Tablet Ngang", "tablet-portrait": "Tablet Dọc" },
+          en: { desktop: "Desktop", "mobile-portrait": "Mobile Portrait", "mobile-landscape": "Mobile Landscape", "tablet-landscape": "Tablet Landscape", "tablet-portrait": "Tablet Portrait" },
+          ja: { desktop: "PC", "mobile-portrait": "スマホ縦", "mobile-landscape": "スマホ横", "tablet-landscape": "タブレット横", "tablet-portrait": "タブレット縦" },
+          my: { desktop: "ဒက်စ်တော့", "mobile-portrait": "ဖုန်းဒေါင်လိုက်", "mobile-landscape": "ဖုန်းအလျားလိုက်", "tablet-landscape": "တက်ဘလက်အလျား", "tablet-portrait": "တက်ဘလက်ဒေါင်" }
+        };
+        const langMap = labelsMap[lang] || labelsMap.vi;
+        const currentText = langMap[deviceMode] || deviceLabel;
+
+        deviceBadge.innerHTML = deviceIcon + ' <span class="hidden sm:inline">' + currentText + '</span>';
+        deviceBadge.title = "Chế độ hiển thị: " + currentText + " (" + w + "×" + h + "px)";
+      }
+
+      // Tự động căn chỉnh lại kích thước biểu đồ Chart.js khi thay đổi kích thước hoặc xoay màn hình
+      if (typeof chartInstance !== "undefined" && chartInstance) {
+        chartInstance.resize();
+      }
+    }
+
+    window.addEventListener("resize", detectAndApplyDeviceLayout);
+    window.addEventListener("orientationchange", function() {
+      setTimeout(detectAndApplyDeviceLayout, 150);
+      setTimeout(detectAndApplyDeviceLayout, 400);
+    });
+    detectAndApplyDeviceLayout();
 
     // ==========================================
     // 3. XÁC THỰC NGƯỜI DÙNG (AUTH)
@@ -1567,6 +1683,9 @@
         if (s2 && s2.value !== lang) s2.value = lang;
 
         runAllTranslations();
+        if (typeof detectAndApplyDeviceLayout === "function") {
+          detectAndApplyDeviceLayout();
+        }
       }
 
       function initI18n() {
