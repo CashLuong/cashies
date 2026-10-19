@@ -31,7 +31,7 @@
         <svg class="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
           <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/>
-          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.8 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/>
+          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-2.8-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.8 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/>
           <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/>
         </svg>
         <span>Đăng nhập với Google</span>
@@ -832,9 +832,9 @@
       }
     });
   </script>
-<!-- ========================================== -->
-  <!-- MODULE ĐA NGÔN NGỮ (VI / EN / JA / MY)     -->
-  <!-- Chỉ cần dán ngay trước thẻ </body>         -->
+
+  <!-- ========================================== -->
+  <!-- MODULE ĐA NGÔN NGỮ (ĐÃ FIX LỖI ĐƠ TRANG)   -->
   <!-- ========================================== -->
   <script>
     (function() {
@@ -1094,8 +1094,27 @@
       };
 
       let currentLang = localStorage.getItem("CASHIES_LANG") || "vi";
+      let observer = null;
+      const watchedIds = ["txList", "debtList", "syncBadge", "budgetStatus", "scanStatus", "btnSubmitTx", "btnSubmitDebt"];
 
-      // 1. Tự động gắn nút chọn ngôn ngữ vào Header & Màn hình Login
+      function setText(el, text) {
+        if (el && el.innerText !== text) el.innerText = text;
+      }
+      function setPlaceholder(el, text) {
+        if (el && el.placeholder !== text) el.placeholder = text;
+      }
+
+      function pauseObserver() {
+        if (observer) observer.disconnect();
+      }
+      function resumeObserver() {
+        if (!observer) return;
+        watchedIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) observer.observe(el, { childList: true, subtree: true, characterData: true });
+        });
+      }
+
       function injectLanguageSelectors() {
         const headerBtnGroup = document.querySelector("#appView header > div:last-child");
         if (headerBtnGroup && !document.getElementById("langSwitcher")) {
@@ -1130,302 +1149,262 @@
         }
       }
 
-      // 2. Dịch toàn bộ văn bản tĩnh trên giao diện
       function translateStaticUI() {
         const t = i18n[currentLang];
         if (!t) return;
 
-        // Màn hình đăng nhập
-        const loginDesc = document.querySelector("#loginView p.text-sm.text-slate-500");
-        if (loginDesc) loginDesc.innerText = t.loginDesc;
-        const loginSpan = document.querySelector("#btnLogin span");
-        if (loginSpan) loginSpan.innerText = t.loginBtn;
+        setText(document.querySelector("#loginView p.text-sm.text-slate-500"), t.loginDesc);
+        setText(document.querySelector("#btnLogin span"), t.loginBtn);
+
         const appStatusEl = document.getElementById("appStatus");
         if (appStatusEl) {
-          appStatusEl.innerText = appStatusEl.innerText.includes("✓") || appStatusEl.innerText.includes("ready") || appStatusEl.innerText.includes("完了") || appStatusEl.innerText.includes("ပြီ") ? t.appReady : t.appInit;
+          const isReady = appStatusEl.innerText.includes("✓") || appStatusEl.innerText.includes("ready") || appStatusEl.innerText.includes("完了") || appStatusEl.innerText.includes("ပြီ");
+          setText(appStatusEl, isReady ? t.appReady : t.appInit);
         }
 
-        // Thanh Header
         const btnConfigKey = document.getElementById("btnConfigKey");
-        if (btnConfigKey) btnConfigKey.title = t.keyTitle;
-        const btnLogout = document.getElementById("btnLogout");
-        if (btnLogout) btnLogout.innerText = t.logout;
+        if (btnConfigKey && btnConfigKey.title !== t.keyTitle) btnConfigKey.title = t.keyTitle;
+        setText(document.getElementById("btnLogout"), t.logout);
 
-        // Bộ lọc tháng
         const monthInput = document.getElementById("filterMonth");
-        if (monthInput && monthInput.previousElementSibling) {
-          monthInput.previousElementSibling.innerText = t.displayMonth;
-        }
+        if (monthInput) setText(monthInput.previousElementSibling, t.displayMonth);
 
-        // 3 thẻ Tổng Thu - Chi - Số Dư
         const incEl = document.getElementById("totalIncome");
-        if (incEl && incEl.previousElementSibling) incEl.previousElementSibling.innerText = t.totalIncome;
+        if (incEl) setText(incEl.previousElementSibling, t.totalIncome);
         const expEl = document.getElementById("totalExpense");
-        if (expEl && expEl.previousElementSibling) expEl.previousElementSibling.innerText = t.totalExpense;
+        if (expEl) setText(expEl.previousElementSibling, t.totalExpense);
         const balEl = document.getElementById("netBalance");
-        if (balEl && balEl.previousElementSibling) balEl.previousElementSibling.innerText = t.netBalance;
+        if (balEl) setText(balEl.previousElementSibling, t.netBalance);
 
-        // Form ghi nhận giao dịch
         const txFormEl = document.getElementById("txForm");
         if (txFormEl) {
           const txSection = txFormEl.parentElement;
-          const h3 = txSection.querySelector("h3");
-          if (h3) h3.innerText = t.recordTx;
+          setText(txSection.querySelector("h3"), t.recordTx);
 
           const scanStatusEl = document.getElementById("scanStatus");
           if (scanStatusEl) {
             const isScanning = scanStatusEl.innerText.includes("...");
-            scanStatusEl.innerText = isScanning ? t.scanning : t.scanAi;
+            setText(scanStatusEl, isScanning ? t.scanning : t.scanAi);
           }
 
-          document.getElementById("btnTypeExpense").innerText = t.expenseBtn;
-          document.getElementById("btnTypeIncome").innerText = t.incomeBtn;
+          setText(document.getElementById("btnTypeExpense"), t.expenseBtn);
+          setText(document.getElementById("btnTypeIncome"), t.incomeBtn);
 
           const amtInput = document.getElementById("txAmount");
           if (amtInput) {
-            if (amtInput.previousElementSibling) amtInput.previousElementSibling.innerText = t.amountLbl;
-            amtInput.placeholder = t.amountPh;
+            setText(amtInput.previousElementSibling, t.amountLbl);
+            setPlaceholder(amtInput, t.amountPh);
           }
 
           const dateInput = document.getElementById("txDate");
-          if (dateInput && dateInput.previousElementSibling) {
-            dateInput.previousElementSibling.innerText = t.dateLbl;
-          }
+          if (dateInput) setText(dateInput.previousElementSibling, t.dateLbl);
 
           const catSelect = document.getElementById("txCategory");
           if (catSelect) {
-            if (catSelect.previousElementSibling) catSelect.previousElementSibling.innerText = t.catLbl;
+            setText(catSelect.previousElementSibling, t.catLbl);
             Array.from(catSelect.options).forEach(opt => {
-              if (t.cats[opt.value]) opt.innerText = t.cats[opt.value];
+              if (t.cats[opt.value]) setText(opt, t.cats[opt.value]);
             });
           }
 
           const noteInput = document.getElementById("txNote");
           if (noteInput) {
-            if (noteInput.previousElementSibling) noteInput.previousElementSibling.innerText = t.noteLbl;
-            noteInput.placeholder = t.notePh;
+            setText(noteInput.previousElementSibling, t.noteLbl);
+            setPlaceholder(noteInput, t.notePh);
           }
 
           const btnSubmitTx = document.getElementById("btnSubmitTx");
           if (btnSubmitTx) {
-            btnSubmitTx.innerText = btnSubmitTx.disabled ? t.savingTx : t.saveTx;
+            setText(btnSubmitTx, btnSubmitTx.disabled ? t.savingTx : t.saveTx);
           }
         }
 
-        // Lịch sử giao dịch & Biểu đồ
         const txListEl = document.getElementById("txList");
-        if (txListEl && txListEl.previousElementSibling) {
-          txListEl.previousElementSibling.innerText = t.txHistory;
-        }
+        if (txListEl) setText(txListEl.previousElementSibling, t.txHistory);
+
         const chartCanvas = document.getElementById("categoryChart");
         if (chartCanvas) {
           const chartSection = chartCanvas.closest("section");
-          const h3 = chartSection ? chartSection.querySelector("h3") : null;
-          if (h3) h3.innerText = t.chartTitle;
+          if (chartSection) setText(chartSection.querySelector("h3"), t.chartTitle);
         }
 
-        // Sổ nợ
         const debtFormEl = document.getElementById("debtForm");
         if (debtFormEl) {
           const debtSection = debtFormEl.parentElement;
           const h3 = debtSection.querySelector("h3");
           if (h3) {
-            h3.innerText = t.debtBook;
-            if (h3.nextElementSibling) h3.nextElementSibling.innerText = t.debtSub;
+            setText(h3, t.debtBook);
+            setText(h3.nextElementSibling, t.debtSub);
           }
           const remDebtEl = document.getElementById("totalRemainingDebt");
-          if (remDebtEl && remDebtEl.previousElementSibling) {
-            remDebtEl.previousElementSibling.innerText = t.totalRemDebt;
-          }
+          if (remDebtEl) setText(remDebtEl.previousElementSibling, t.totalRemDebt);
 
-          const formTitle = debtFormEl.querySelector("p");
-          if (formTitle) formTitle.innerText = t.addNewDebt;
-
-          const debtTitle = document.getElementById("debtTitle");
-          if (debtTitle) debtTitle.placeholder = t.debtTitlePh;
-          const debtAmount = document.getElementById("debtAmount");
-          if (debtAmount) debtAmount.placeholder = t.debtAmtPh;
-          const debtNote = document.getElementById("debtNote");
-          if (debtNote) debtNote.placeholder = t.debtNotePh;
+          setText(debtFormEl.querySelector("p"), t.addNewDebt);
+          setPlaceholder(document.getElementById("debtTitle"), t.debtTitlePh);
+          setPlaceholder(document.getElementById("debtAmount"), t.debtAmtPh);
+          setPlaceholder(document.getElementById("debtNote"), t.debtNotePh);
 
           const btnSubmitDebt = document.getElementById("btnSubmitDebt");
           if (btnSubmitDebt) {
-            btnSubmitDebt.innerText = btnSubmitDebt.disabled ? t.addingDebt : t.addDebtBtn;
+            setText(btnSubmitDebt, btnSubmitDebt.disabled ? t.addingDebt : t.addDebtBtn);
           }
         }
 
-        // Ngân sách tháng
         const btnSetBudget = document.getElementById("btnSetBudget");
         if (btnSetBudget) {
-          if (btnSetBudget.previousElementSibling) btnSetBudget.previousElementSibling.innerText = t.ceiling;
-          const budgetHeader = btnSetBudget.parentElement.previousElementSibling;
-          if (budgetHeader) budgetHeader.innerText = t.monthlyBudget;
+          setText(btnSetBudget.previousElementSibling, t.ceiling);
+          if (btnSetBudget.parentElement) {
+            setText(btnSetBudget.parentElement.previousElementSibling, t.monthlyBudget);
+          }
         }
       }
 
-      // 3. Dịch các thành phần sinh động từ Firestore (Lịch sử, Sổ nợ, Biểu đồ, Badge)
-      let isTranslatingDynamic = false;
       function translateDynamicUI() {
-        if (isTranslatingDynamic) return;
-        isTranslatingDynamic = true;
         const t = i18n[currentLang];
+        if (!t) return;
 
-        try {
-          // Badge đồng bộ
-          const syncBadge = document.getElementById("syncBadge");
-          if (syncBadge) {
-            const match = syncBadge.innerText.match(/\((\d+)\)/);
-            if (match) {
-              syncBadge.innerText = `${t.synced} (${match[1]})`;
-            } else if (syncBadge.className.includes("rose")) {
-              syncBadge.innerText = t.syncErr;
-            } else {
-              syncBadge.innerText = t.connecting;
-            }
+        const syncBadge = document.getElementById("syncBadge");
+        if (syncBadge) {
+          const match = syncBadge.innerText.match(/\((\d+)\)/);
+          if (match) {
+            setText(syncBadge, `${t.synced} (${match[1]})`);
+          } else if (syncBadge.className.includes("rose")) {
+            setText(syncBadge, t.syncErr);
+          } else {
+            setText(syncBadge, t.connecting);
           }
+        }
 
-          // Danh sách giao dịch
-          const txListEl = document.getElementById("txList");
-          if (txListEl) {
-            const emptyMsg = txListEl.querySelector("p.text-center");
-            if (emptyMsg) {
-              emptyMsg.innerText = t.noTx;
-            } else {
-              const items = txListEl.querySelectorAll("div.py-2\\.5 p.font-semibold");
-              items.forEach(p => {
-                if (p.firstChild && p.firstChild.nodeType === Node.TEXT_NODE) {
-                  const rawCat = p.firstChild.nodeValue.trim();
-                  // Tìm key gốc tiếng Việt nếu đã bị dịch trước đó
-                  let viKey = Object.keys(i18n.vi.cats).find(k => 
-                    k === rawCat || i18n.en.cats[k] === rawCat || i18n.ja.cats[k] === rawCat || i18n.my.cats[k] === rawCat
-                  );
-                  if (viKey && t.cats[viKey]) {
-                    p.firstChild.nodeValue = t.cats[viKey];
-                  }
+        const txListEl = document.getElementById("txList");
+        if (txListEl) {
+          const emptyMsg = txListEl.querySelector("p.text-center");
+          if (emptyMsg) {
+            setText(emptyMsg, t.noTx);
+          } else {
+            const items = txListEl.querySelectorAll("div.py-2\\.5 p.font-semibold");
+            items.forEach(p => {
+              if (p.firstChild && p.firstChild.nodeType === Node.TEXT_NODE) {
+                const rawCat = p.firstChild.nodeValue.trim();
+                let viKey = Object.keys(i18n.vi.cats).find(k => 
+                  k === rawCat || i18n.en.cats[k] === rawCat || i18n.ja.cats[k] === rawCat || i18n.my.cats[k] === rawCat
+                );
+                if (viKey && t.cats[viKey] && p.firstChild.nodeValue !== t.cats[viKey]) {
+                  p.firstChild.nodeValue = t.cats[viKey];
                 }
-              });
-            }
-          }
-
-          // Danh sách Sổ Nợ
-          const debtListEl = document.getElementById("debtList");
-          if (debtListEl) {
-            const emptyMsg = debtListEl.querySelector("p.text-center");
-            if (emptyMsg) {
-              emptyMsg.innerText = t.noDebt;
-            } else {
-              debtListEl.querySelectorAll(":scope > div").forEach(card => {
-                // Ghi chú & Gốc
-                const subInfo = card.querySelector("div.flex > div:first-child > p:last-child");
-                if (subInfo) {
-                  let txt = subInfo.innerText;
-                  ["Không có ghi chú", "No note", "メモなし", "မှတ်ချက်မရှိပါ"].forEach(s => {
-                    txt = txt.replace(s, t.noNote);
-                  });
-                  ["Gốc:", "Principal:", "元金:", "မူလ:"].forEach(s => {
-                    txt = txt.replace(s, t.origDebt);
-                  });
-                  subInfo.innerText = txt;
-                }
-                // Trạng thái Còn / Đã trả xong
-                const statusP = card.querySelector("div.text-right > p");
-                if (statusP) {
-                  if (statusP.innerText.includes("✓")) {
-                    statusP.innerText = t.doneDebt;
-                  } else {
-                    let sTxt = statusP.innerText;
-                    ["Còn:", "Left:", "残り:", "ကျန်ငွေ:"].forEach(s => {
-                      sTxt = sTxt.replace(s, t.remDebt);
-                    });
-                    statusP.innerText = sTxt;
-                  }
-                }
-                // Đã trả
-                const paidSpan = card.querySelector("div.text-right > span");
-                if (paidSpan) {
-                  let pTxt = paidSpan.innerText;
-                  ["Đã trả:", "Paid:", "返済済:", "ဆပ်ပြီး:"].forEach(s => {
-                    pTxt = pTxt.replace(s, t.paidDebt);
-                  });
-                  paidSpan.innerText = pTxt;
-                }
-                // Các nút bấm
-                const btns = card.querySelectorAll("button");
-                btns.forEach(btn => {
-                  const bTxt = btn.innerText.trim();
-                  if (bTxt.startsWith("+")) btn.innerText = t.payMoreBtn;
-                  else btn.innerText = t.deleteBtn;
-                });
-              });
-            }
-          }
-
-          // Trạng thái Ngân sách
-          const budgetStatus = document.getElementById("budgetStatus");
-          if (budgetStatus) {
-            let bTxt = budgetStatus.innerText;
-            if (bTxt.includes(":")) {
-              const amountPart = bTxt.split(":")[1].trim();
-              const progress = document.getElementById("budgetProgress");
-              if (progress && progress.className.includes("rose")) {
-                budgetStatus.innerText = t.overBudget + amountPart;
-              } else {
-                budgetStatus.innerText = t.leftBudget + amountPart;
               }
-            } else {
-              budgetStatus.innerText = t.noBudget;
-            }
-          }
-
-          // Biểu đồ Chart.js
-          if (typeof chartInstance !== "undefined" && chartInstance && chartInstance.data && chartInstance.data.labels) {
-            let updated = false;
-            chartInstance.data.labels = chartInstance.data.labels.map(lbl => {
-              let viKey = Object.keys(i18n.vi.cats).find(k => 
-                k === lbl || i18n.en.cats[k] === lbl || i18n.ja.cats[k] === lbl || i18n.my.cats[k] === lbl
-              );
-              if (viKey && t.cats[viKey] && lbl !== t.cats[viKey]) {
-                updated = true;
-                return t.cats[viKey];
-              }
-              return lbl;
             });
-            if (updated) chartInstance.update();
           }
-        } finally {
-          isTranslatingDynamic = false;
+        }
+
+        const debtListEl = document.getElementById("debtList");
+        if (debtListEl) {
+          const emptyMsg = debtListEl.querySelector("p.text-center");
+          if (emptyMsg) {
+            setText(emptyMsg, t.noDebt);
+          } else {
+            debtListEl.querySelectorAll(":scope > div").forEach(card => {
+              const subInfo = card.querySelector("div.flex > div:first-child > p:last-child");
+              if (subInfo) {
+                let txt = subInfo.innerText;
+                ["Không có ghi chú", "No note", "メモなし", "မှတ်ချက်မရှိပါ"].forEach(s => {
+                  txt = txt.replace(s, t.noNote);
+                });
+                ["Gốc:", "Principal:", "元金:", "မူလ:"].forEach(s => {
+                  txt = txt.replace(s, t.origDebt);
+                });
+                setText(subInfo, txt);
+              }
+              const statusP = card.querySelector("div.text-right > p");
+              if (statusP) {
+                if (statusP.innerText.includes("✓")) {
+                  setText(statusP, t.doneDebt);
+                } else {
+                  let sTxt = statusP.innerText;
+                  ["Còn:", "Left:", "残り:", "ကျန်ငွေ:"].forEach(s => {
+                    sTxt = sTxt.replace(s, t.remDebt);
+                  });
+                  setText(statusP, sTxt);
+                }
+              }
+              const paidSpan = card.querySelector("div.text-right > span");
+              if (paidSpan) {
+                let pTxt = paidSpan.innerText;
+                ["Đã trả:", "Paid:", "返済済:", "ဆပ်ပြီး:"].forEach(s => {
+                  pTxt = pTxt.replace(s, t.paidDebt);
+                });
+                setText(paidSpan, pTxt);
+              }
+              const btns = card.querySelectorAll("button");
+              btns.forEach(btn => {
+                const bTxt = btn.innerText.trim();
+                if (bTxt.startsWith("+")) setText(btn, t.payMoreBtn);
+                else setText(btn, t.deleteBtn);
+              });
+            });
+          }
+        }
+
+        const budgetStatus = document.getElementById("budgetStatus");
+        if (budgetStatus) {
+          let bTxt = budgetStatus.innerText;
+          if (bTxt.includes(":")) {
+            const amountPart = bTxt.split(":")[1].trim();
+            const progress = document.getElementById("budgetProgress");
+            if (progress && progress.className.includes("rose")) {
+              setText(budgetStatus, t.overBudget + amountPart);
+            } else {
+              setText(budgetStatus, t.leftBudget + amountPart);
+            }
+          } else {
+            setText(budgetStatus, t.noBudget);
+          }
+        }
+
+        if (typeof chartInstance !== "undefined" && chartInstance && chartInstance.data && chartInstance.data.labels) {
+          let updated = false;
+          chartInstance.data.labels = chartInstance.data.labels.map(lbl => {
+            let viKey = Object.keys(i18n.vi.cats).find(k => 
+              k === lbl || i18n.en.cats[k] === lbl || i18n.ja.cats[k] === lbl || i18n.my.cats[k] === lbl
+            );
+            if (viKey && t.cats[viKey] && lbl !== t.cats[viKey]) {
+              updated = true;
+              return t.cats[viKey];
+            }
+            return lbl;
+          });
+          if (updated) chartInstance.update();
         }
       }
 
-      // 4. Hàm kích hoạt chuyển đổi ngôn ngữ
+      function runAllTranslations() {
+        pauseObserver();
+        try {
+          translateStaticUI();
+          translateDynamicUI();
+        } finally {
+          resumeObserver();
+        }
+      }
+
       function setLanguage(lang) {
         if (!i18n[lang]) return;
         currentLang = lang;
         localStorage.setItem("CASHIES_LANG", lang);
 
         const s1 = document.getElementById("langSwitcher");
-        if (s1) s1.value = lang;
+        if (s1 && s1.value !== lang) s1.value = lang;
         const s2 = document.getElementById("langSwitcherLogin");
-        if (s2) s2.value = lang;
+        if (s2 && s2.value !== lang) s2.value = lang;
 
-        translateStaticUI();
-        translateDynamicUI();
+        runAllTranslations();
       }
 
-      // 5. Khởi chạy và lắng nghe sự kiện thay đổi DOM
       function initI18n() {
         injectLanguageSelectors();
+        observer = new MutationObserver(() => {
+          runAllTranslations();
+        });
         setLanguage(currentLang);
-
-        const observer = new MutationObserver(() => {
-          translateDynamicUI();
-          translateStaticUI();
-        });
-
-        ["txList", "debtList", "syncBadge", "budgetStatus", "scanStatus", "btnSubmitTx", "btnSubmitDebt"].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) observer.observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
-        });
       }
 
       if (document.readyState === "loading") {
