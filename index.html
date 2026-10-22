@@ -232,21 +232,30 @@
           </form>
         </section>
 
-        <!-- 7. TỔNG NGÂN SÁCH THÁNG & CHIA THEO DANH MỤC -->
+        <!-- 7. TỔNG NGÂN SÁCH (THÁNG / TUẦN) & CHIA THEO DANH MỤC -->
         <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-          <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-sm text-slate-800" id="monthlyBudgetHeading">Ngân sách tháng</span>
+          <div class="flex items-center justify-between text-xs gap-2 flex-wrap">
             <div class="flex items-center gap-2">
-              <button type="button" id="btnOpenBudgetModal" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition shadow-2xs">
-                <span>➕ Đặt ngân sách</span>
-              </button>
+              <span class="font-bold text-sm text-slate-800" id="budgetHeading">Ngân sách tháng</span>
+              <!-- Toggle Tháng / Tuần -->
+              <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-semibold">
+                <button type="button" id="btnBudgetPeriodMonth" class="px-2.5 py-1 rounded-md bg-white shadow-2xs text-indigo-600 transition">Tháng</button>
+                <button type="button" id="btnBudgetPeriodWeek" class="px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition">Tuần</button>
+              </div>
             </div>
+            
+            <button type="button" id="btnOpenBudgetModal" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition shadow-2xs">
+              <span>➕ Đặt ngân sách</span>
+            </button>
           </div>
 
           <!-- Tiến độ tổng ngân sách -->
           <div class="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
             <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-500 font-medium">Tổng hạn mức:</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-slate-500 font-medium" id="lblTotalLimit">Tổng hạn mức:</span>
+                <span id="budgetPeriodScopeBadge" class="text-[10px] bg-slate-200/70 text-slate-600 px-2 py-0.5 rounded-md font-semibold"></span>
+              </div>
               <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline" title="Bấm để chỉnh sửa ngân sách">
                 <span id="budgetDisplay">¥0</span>
               </button>
@@ -328,51 +337,99 @@
 
   </div>
 
-  <!-- MODAL THIẾT LẬP NGÂN SÁCH THÁNG & CHIA THEO DANH MỤC -->
+  <!-- MODAL THIẾT LẬP NGÂN SÁCH (THÁNG & TUẦN) & CHIA THEO DANH MỤC -->
   <div id="budgetModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
       <!-- Modal Header -->
       <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
         <div>
-          <h3 class="font-bold text-base text-slate-800" id="budgetModalTitle">Thiết lập ngân sách tháng</h3>
-          <p class="text-xs text-slate-400" id="budgetModalSub">Phân bổ hạn mức chi tiêu tổng và theo danh mục</p>
+          <h3 class="font-bold text-base text-slate-800" id="budgetModalTitle">Thiết lập ngân sách</h3>
+          <p class="text-xs text-slate-400" id="budgetModalSub">Phân bổ hạn mức chi tiêu tổng và theo danh mục (Tháng / Tuần)</p>
         </div>
         <button type="button" id="btnCloseBudgetModal" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition text-sm">✕</button>
       </div>
 
       <!-- Modal Body (Scrollable) -->
       <div class="p-4 sm:p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
-        <!-- Tổng ngân sách tháng -->
-        <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-100 space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="font-bold text-slate-700 text-xs" id="lblTotalMonthlyBudget">Tổng ngân sách tháng (¥)</label>
-            <button type="button" id="btnSyncSumCategories" class="text-[11px] text-indigo-600 hover:underline font-semibold" title="Tự động tính bằng tổng các danh mục bên dưới">
-              Lấy tổng danh mục
+        
+        <!-- Tabs chọn loại ngân sách cần sửa (Tháng / Tuần) -->
+        <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button type="button" id="tabModalMonth" class="py-2 rounded-lg bg-white text-indigo-600 shadow-2xs transition">📅 Ngân sách Tháng</button>
+          <button type="button" id="tabModalWeek" class="py-2 rounded-lg text-slate-500 hover:text-slate-800 transition">🗓️ Ngân sách Tuần</button>
+        </div>
+
+        <!-- Panel Ngân sách Tháng -->
+        <div id="panelModalMonth" class="space-y-4">
+          <!-- Tổng ngân sách tháng -->
+          <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-100 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-700 text-xs" id="lblTotalMonthlyBudget">Tổng ngân sách tháng (¥)</label>
+              <button type="button" id="btnSyncSumCategoriesMonth" class="text-[11px] text-indigo-600 hover:underline font-semibold" title="Tự động tính bằng tổng các danh mục bên dưới">
+                Lấy tổng danh mục
+              </button>
+            </div>
+            <input type="number" id="inputTotalBudget" placeholder="vd: 150000" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span class="lblSumFromCatsText">Tổng từ các danh mục:</span>
+              <span id="calculatedSumCatBudgetsMonth" class="font-bold text-indigo-600">¥0</span>
+            </div>
+          </div>
+
+          <!-- Hạn mức danh mục mặc định (Tháng) -->
+          <div class="space-y-2">
+            <p class="font-bold text-slate-700 text-xs lblStandardCatBudgetsText">Hạn mức danh mục mặc định (¥):</p>
+            <div id="standardCatBudgetInputsMonth" class="space-y-2"></div>
+          </div>
+
+          <!-- Danh mục tự đặt tên (Tháng) -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <p class="font-bold text-slate-700 text-xs lblCustomCatBudgetsText">Danh mục tự đặt tên:</p>
+            <div id="customCatBudgetInputsMonth" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- Panel Ngân sách Tuần -->
+        <div id="panelModalWeek" class="space-y-4 hidden">
+          <!-- Nút hỗ trợ nhanh chia từ tháng (÷ 4) -->
+          <div class="flex items-center justify-between bg-amber-50/80 border border-amber-200 p-2.5 rounded-xl gap-2 flex-wrap">
+            <span class="text-[11px] text-amber-800 font-medium" id="lblDivideFromMonthNote">Tự động tính từ ngân sách tháng:</span>
+            <button type="button" id="btnDivideFromMonth" class="text-xs bg-amber-600 hover:bg-amber-700 text-white font-semibold px-2.5 py-1 rounded-lg transition shadow-2xs">
+              ⚡ Chia từ tháng (÷ 4)
             </button>
           </div>
-          <input type="number" id="inputTotalBudget" placeholder="vd: 150000" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-400">
-          <div class="flex items-center justify-between text-[11px] text-slate-500">
-            <span id="lblSumFromCats">Tổng từ các danh mục:</span>
-            <span id="calculatedSumCatBudgets" class="font-bold text-indigo-600">¥0</span>
+
+          <!-- Tổng ngân sách tuần -->
+          <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-100 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-700 text-xs" id="lblTotalWeeklyBudget">Tổng ngân sách tuần (¥)</label>
+              <button type="button" id="btnSyncSumCategoriesWeek" class="text-[11px] text-indigo-600 hover:underline font-semibold" title="Tự động tính bằng tổng các danh mục bên dưới">
+                Lấy tổng danh mục
+              </button>
+            </div>
+            <input type="number" id="inputTotalBudgetWeekly" placeholder="vd: 35000" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span class="lblSumFromCatsText">Tổng từ các danh mục:</span>
+              <span id="calculatedSumCatBudgetsWeek" class="font-bold text-indigo-600">¥0</span>
+            </div>
+          </div>
+
+          <!-- Hạn mức danh mục mặc định (Tuần) -->
+          <div class="space-y-2">
+            <p class="font-bold text-slate-700 text-xs lblStandardCatBudgetsText">Hạn mức danh mục mặc định (¥):</p>
+            <div id="standardCatBudgetInputsWeek" class="space-y-2"></div>
+          </div>
+
+          <!-- Danh mục tự đặt tên (Tuần) -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <p class="font-bold text-slate-700 text-xs lblCustomCatBudgetsText">Danh mục tự đặt tên:</p>
+            <div id="customCatBudgetInputsWeek" class="space-y-2"></div>
           </div>
         </div>
 
-        <!-- Hạn mức danh mục mặc định -->
-        <div class="space-y-2">
-          <p class="font-bold text-slate-700 text-xs" id="lblStandardCatBudgets">Hạn mức danh mục mặc định (¥):</p>
-          <div id="standardCatBudgetInputs" class="space-y-2"></div>
-        </div>
-
-        <!-- Danh mục tự đặt tên -->
-        <div class="space-y-2 pt-2 border-t border-slate-100">
-          <div class="flex items-center justify-between">
-            <p class="font-bold text-slate-700 text-xs" id="lblCustomCatBudgets">Danh mục tự đặt tên:</p>
-          </div>
-          
-          <div id="customCatBudgetInputs" class="space-y-2"></div>
-
-          <!-- Form thêm danh mục tự đặt -->
-          <div class="flex items-center gap-2 pt-1">
+        <!-- Form thêm danh mục tự đặt (Dùng chung cho cả Tháng & Tuần) -->
+        <div class="space-y-2 pt-2 border-t border-slate-200">
+          <p class="font-bold text-slate-700 text-xs" id="lblAddNewCatTitle">Thêm danh mục tự đặt mới:</p>
+          <div class="flex items-center gap-2">
             <input type="text" id="inputNewCatName" placeholder="Tên danh mục mới (vd: Giải trí, Gym...)" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400">
             <button type="button" id="btnAddCustomCat" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded-xl text-xs transition shrink-0">
               + Thêm danh mục
@@ -416,14 +473,438 @@
     });
 
     // ==========================================
-    // 2. BIẾN TRẠNG THÁI (STATE)
+    // 2. TỪ ĐIỂN ĐA NGÔN NGỮ (i18n - VI, EN, JA, MY)
+    // ==========================================
+    const i18n = {
+      vi: {
+        loginDesc: "Đăng nhập tài khoản Google để đồng bộ dữ liệu chi tiêu cá nhân.",
+        loginBtn: "Đăng nhập với Google",
+        appReady: "Hệ thống đã sẵn sàng ✓",
+        appInit: "Đang khởi tạo...",
+        connecting: "Đang kết nối...",
+        synced: "Đã đồng bộ",
+        syncErr: "Lỗi đồng bộ!",
+        keyTitle: "Cài đặt Gemini API Key",
+        logout: "Đăng xuất",
+        displayMonth: "Tháng hiển thị",
+        totalIncome: "Tổng Thu",
+        totalExpense: "Tổng Chi",
+        netBalance: "Số Dư",
+        cardBalanceTitle: "Bấm để điều chỉnh số dư thực tế",
+        recordTx: "Ghi nhận giao dịch",
+        scanAi: "Quét Hóa Đơn (AI)",
+        scanning: "Đang phân tích...",
+        expenseBtn: "Chi tiêu (-)",
+        incomeBtn: "Thu nhập (+)",
+        amountLbl: "Số tiền (¥)",
+        amountPh: "vd: 1200",
+        dateLbl: "Ngày giao dịch",
+        catLbl: "Danh mục",
+        noteLbl: "Ghi chú",
+        notePh: "vd: Siêu thị Gyomu, Bento...",
+        saveTx: "Lưu Giao Dịch",
+        savingTx: "Đang lưu...",
+        txHistory: "Lịch sử giao dịch",
+        noTx: "Không có giao dịch nào trong tháng này.",
+        chartTitle: "Tỷ lệ chi tiêu tháng",
+        debtBook: "Sổ Nợ (Việt Nam)",
+        debtSub: "Theo dõi nợ riêng bằng đơn vị VNĐ",
+        totalRemDebt: "Tổng nợ còn lại",
+        addNewDebt: "Thêm khoản nợ mới",
+        debtTitlePh: "Tên khoản nợ (vd: Vay ngân hàng)",
+        debtAmtPh: "Số tiền nợ gốc (VNĐ)",
+        debtNotePh: "Ghi chú / Hạn trả",
+        addDebtBtn: "+ Thêm khoản nợ",
+        addingDebt: "Đang thêm...",
+        noDebt: "Chưa có khoản nợ nào.",
+        noNote: "Không có ghi chú",
+        origDebt: "Gốc:",
+        paidDebt: "Đã trả:",
+        remDebt: "Còn:",
+        doneDebt: "Đã trả xong ✓",
+        payMoreBtn: "+ Trả bớt",
+        deleteBtn: "Xóa",
+        monthlyBudget: "Ngân sách tháng",
+        weeklyBudget: "Ngân sách tuần",
+        monthPeriod: "Tháng",
+        weekPeriod: "Tuần",
+        thisWeek: "Tuần này",
+        lblTotalLimit: "Tổng hạn mức:",
+        catBudgetsHeader: "Hạn mức theo danh mục",
+        catCount: "({n} danh mục)",
+        noBudget: "Chưa đặt hạn mức",
+        overBudget: "Vượt ngân sách: ",
+        leftBudget: "Còn lại: ",
+        overLimitShort: "Vượt ",
+        nearLimitShort: "Gần trần",
+        noCatBudgetSet: "Chưa phân chia hạn mức cho danh mục nào.",
+        setLimitNow: "+ Thiết lập hạn mức ngay",
+        setBudgetBtn: "➕ Đặt ngân sách",
+        budgetModalTitle: "Thiết lập ngân sách",
+        budgetModalSub: "Phân bổ hạn mức chi tiêu tổng và theo danh mục (Tháng / Tuần)",
+        tabModalMonth: "📅 Ngân sách Tháng",
+        tabModalWeek: "🗓️ Ngân sách Tuần",
+        divideFromMonthNote: "Tự động tính từ ngân sách tháng:",
+        divideFromMonthBtn: "⚡ Chia từ tháng (÷ 4)",
+        totalMonthlyBudgetLbl: "Tổng ngân sách tháng (¥)",
+        totalWeeklyBudgetLbl: "Tổng ngân sách tuần (¥)",
+        syncSumBtn: "Lấy tổng danh mục",
+        sumFromCats: "Tổng từ các danh mục:",
+        stdCatsTitle: "Hạn mức danh mục mặc định (¥):",
+        customCatsTitle: "Danh mục tự đặt tên:",
+        noCustomCatsNote: "Chưa có danh mục tự đặt nào. Nhập tên bên dưới để thêm.",
+        addNewCatTitle: "Thêm danh mục tự đặt mới:",
+        newCatPh: "Tên danh mục mới (vd: Giải trí, Gym...)",
+        addCatBtn: "+ Thêm danh mục",
+        cancelBtn: "Hủy",
+        saveBudgetBtn: "Lưu ngân sách",
+        savingBudgetBtn: "Đang lưu...",
+        undoCalc: "↩ Hoàn tác",
+        applyCalcBtn: "Áp dụng",
+        calcOperandPh: "Số cần tính...",
+        cats: {
+          "Ăn uống": "Ăn uống",
+          "Mua sắm": "Mua sắm",
+          "Đi lại": "Đi lại",
+          "Nhà cửa & Hóa đơn": "Nhà cửa & Hóa đơn",
+          "Học tập / Công việc": "Học tập / Công việc",
+          "Lương": "Lương",
+          "Khác": "Khác"
+        }
+      },
+      en: {
+        loginDesc: "Sign in with Google to sync your personal expense data.",
+        loginBtn: "Sign in with Google",
+        appReady: "System ready ✓",
+        appInit: "Initializing...",
+        connecting: "Connecting...",
+        synced: "Synced",
+        syncErr: "Sync error!",
+        keyTitle: "Configure Gemini API Key",
+        logout: "Logout",
+        displayMonth: "Display Month",
+        totalIncome: "Total Income",
+        totalExpense: "Total Expense",
+        netBalance: "Net Balance",
+        cardBalanceTitle: "Click to adjust actual balance",
+        recordTx: "Record Transaction",
+        scanAi: "Scan Receipt (AI)",
+        scanning: "Analyzing...",
+        expenseBtn: "Expense (-)",
+        incomeBtn: "Income (+)",
+        amountLbl: "Amount (¥)",
+        amountPh: "e.g. 1200",
+        dateLbl: "Transaction Date",
+        catLbl: "Category",
+        noteLbl: "Note",
+        notePh: "e.g. Supermarket, Bento...",
+        saveTx: "Save Transaction",
+        savingTx: "Saving...",
+        txHistory: "Transaction History",
+        noTx: "No transactions this month.",
+        chartTitle: "Monthly Expense Ratio",
+        debtBook: "Debt Book (VND)",
+        debtSub: "Track separate debts in VND",
+        totalRemDebt: "Total Remaining Debt",
+        addNewDebt: "Add New Debt",
+        debtTitlePh: "Debt name (e.g. Bank loan)",
+        debtAmtPh: "Principal amount (VND)",
+        debtNotePh: "Note / Due date",
+        addDebtBtn: "+ Add Debt",
+        addingDebt: "Adding...",
+        noDebt: "No debts recorded yet.",
+        noNote: "No note",
+        origDebt: "Principal:",
+        paidDebt: "Paid:",
+        remDebt: "Left:",
+        doneDebt: "Paid off ✓",
+        payMoreBtn: "+ Pay part",
+        deleteBtn: "Delete",
+        monthlyBudget: "Monthly Budget",
+        weeklyBudget: "Weekly Budget",
+        monthPeriod: "Month",
+        weekPeriod: "Week",
+        thisWeek: "This week",
+        lblTotalLimit: "Total limit:",
+        catBudgetsHeader: "Category Budgets",
+        catCount: "({n} categories)",
+        noBudget: "No limit set",
+        overBudget: "Over budget: ",
+        leftBudget: "Remaining: ",
+        overLimitShort: "Over ",
+        nearLimitShort: "Near limit",
+        noCatBudgetSet: "No category budget limits set.",
+        setLimitNow: "+ Set category limits now",
+        setBudgetBtn: "➕ Set Budget",
+        budgetModalTitle: "Set Budget",
+        budgetModalSub: "Allocate overall and category spending limits (Month / Week)",
+        tabModalMonth: "📅 Monthly Budget",
+        tabModalWeek: "🗓️ Weekly Budget",
+        divideFromMonthNote: "Auto-calculate from monthly budget:",
+        divideFromMonthBtn: "⚡ Divide from month (÷ 4)",
+        totalMonthlyBudgetLbl: "Total Monthly Budget (¥)",
+        totalWeeklyBudgetLbl: "Total Weekly Budget (¥)",
+        syncSumBtn: "Use Category Sum",
+        sumFromCats: "Total from categories:",
+        stdCatsTitle: "Default Category Limits (¥):",
+        customCatsTitle: "Custom Categories:",
+        noCustomCatsNote: "No custom categories yet. Enter a name below to add.",
+        addNewCatTitle: "Add New Custom Category:",
+        newCatPh: "New category name (e.g. Entertainment, Gym...)",
+        addCatBtn: "+ Add Category",
+        cancelBtn: "Cancel",
+        saveBudgetBtn: "Save Budget",
+        savingBudgetBtn: "Saving...",
+        undoCalc: "↩ Undo",
+        applyCalcBtn: "Apply",
+        calcOperandPh: "Number...",
+        cats: {
+          "Ăn uống": "Food & Dining",
+          "Mua sắm": "Shopping",
+          "Đi lại": "Transportation",
+          "Nhà cửa & Hóa đơn": "Housing & Bills",
+          "Học tập / Công việc": "Study / Work",
+          "Lương": "Salary",
+          "Khác": "Others"
+        }
+      },
+      ja: {
+        loginDesc: "Googleアカウントでログインして収支データを同期します。",
+        loginBtn: "Googleでログイン",
+        appReady: "システム準備完了 ✓",
+        appInit: "初期化中...",
+        connecting: "接続中...",
+        synced: "同期済み",
+        syncErr: "同期エラー！",
+        keyTitle: "Gemini APIキー設定",
+        logout: "ログアウト",
+        displayMonth: "表示月",
+        totalIncome: "総収入",
+        totalExpense: "総支出",
+        netBalance: "残高",
+        cardBalanceTitle: "クリックして実際の残高を調整",
+        recordTx: "取引を記録",
+        scanAi: "レシート読取 (AI)",
+        scanning: "解析中...",
+        expenseBtn: "支出 (-)",
+        incomeBtn: "収入 (+)",
+        amountLbl: "金額 (¥)",
+        amountPh: "例: 1200",
+        dateLbl: "取引日",
+        catLbl: "カテゴリー",
+        noteLbl: "メモ",
+        notePh: "例: 業務スーパー、弁当...",
+        saveTx: "取引を保存",
+        savingTx: "保存中...",
+        txHistory: "取引履歴",
+        noTx: "今月の取引はありません。",
+        chartTitle: "月間支出の割合",
+        debtBook: "借入金帳簿 (VND)",
+        debtSub: "VND単位で個別に借入を管理",
+        totalRemDebt: "残りの借入総額",
+        addNewDebt: "新しい借入を追加",
+        debtTitlePh: "借入名 (例: 銀行ローン)",
+        debtAmtPh: "元金 (VND)",
+        debtNotePh: "メモ / 返済期限",
+        addDebtBtn: "+ 借入を追加",
+        addingDebt: "追加中...",
+        noDebt: "借入の記録はありません。",
+        noNote: "メモなし",
+        origDebt: "元金:",
+        paidDebt: "返済済:",
+        remDebt: "残り:",
+        doneDebt: "完済 ✓",
+        payMoreBtn: "+ 一部返済",
+        deleteBtn: "削除",
+        monthlyBudget: "月間予算",
+        weeklyBudget: "週間予算",
+        monthPeriod: "月間",
+        weekPeriod: "週間",
+        thisWeek: "今週",
+        lblTotalLimit: "総上限額:",
+        catBudgetsHeader: "カテゴリー別予算",
+        catCount: "({n} カテゴリー)",
+        noBudget: "上限未設定",
+        overBudget: "予算超過: ",
+        leftBudget: "残り: ",
+        overLimitShort: "超過 ",
+        nearLimitShort: "上限間近",
+        noCatBudgetSet: "カテゴリー別の上限が設定されていません。",
+        setLimitNow: "+ カテゴリー上限を設定",
+        setBudgetBtn: "➕ 予算を設定",
+        budgetModalTitle: "予算の設定",
+        budgetModalSub: "全体およびカテゴリー別の支出上限を配分（月間／週間）",
+        tabModalMonth: "📅 月間予算",
+        tabModalWeek: "🗓️ 週間予算",
+        divideFromMonthNote: "月間予算から自動計算:",
+        divideFromMonthBtn: "⚡ 月額から按分 (÷ 4)",
+        totalMonthlyBudgetLbl: "月間総予算 (¥)",
+        totalWeeklyBudgetLbl: "週間総予算 (¥)",
+        syncSumBtn: "カテゴリー合計を反映",
+        sumFromCats: "カテゴリー合計:",
+        stdCatsTitle: "デフォルトカテゴリーの上限 (¥):",
+        customCatsTitle: "カスタムカテゴリー:",
+        noCustomCatsNote: "カスタムカテゴリーはありません。下から追加してください。",
+        addNewCatTitle: "新しいカスタムカテゴリーを追加:",
+        newCatPh: "新しいカテゴリー名（例: 娯楽、ジム等）",
+        addCatBtn: "+ カテゴリー追加",
+        cancelBtn: "キャンセル",
+        saveBudgetBtn: "予算を保存",
+        savingBudgetBtn: "保存中...",
+        undoCalc: "↩ 元に戻す",
+        applyCalcBtn: "適用",
+        calcOperandPh: "計算する数値...",
+        cats: {
+          "Ăn uống": "食費",
+          "Mua sắm": "買い物",
+          "Đi lại": "交通費",
+          "Nhà cửa & Hóa đơn": "住居・光熱費",
+          "Học tập / Công việc": "学習・仕事",
+          "Lương": "給与",
+          "Khác": "その他"
+        }
+      },
+      my: {
+        loginDesc: "သင့်အသုံးစရိတ်ဒေတာကို ချိတ်ဆက်ရန် Google အကောင့်ဖြင့် ဝင်ရောက်ပါ။",
+        loginBtn: "Google ဖြင့် ဝင်ရောက်ပါ",
+        appReady: "စနစ်အသင့်ဖြစ်ပါပြီ ✓",
+        appInit: "စတင်နေသည်...",
+        connecting: "ချိတ်ဆက်နေသည်...",
+        synced: "ချိတ်ဆက်ပြီး",
+        syncErr: "ချိတ်ဆက်မှု အမှား!",
+        keyTitle: "Gemini API Key သတ်မှတ်ရန်",
+        logout: "ထွက်ရန်",
+        displayMonth: "ပြသမည့်လ",
+        totalIncome: "စုစုပေါင်းဝင်ငွေ",
+        totalExpense: "စုစုပေါင်းထွက်ငွေ",
+        netBalance: "လက်ကျန်ငွေ",
+        cardBalanceTitle: "လက်ကျန်ငွေအမှန်ကို ချိန်ညှိရန် နှိပ်ပါ",
+        recordTx: "စာရင်းမှတ်ရန်",
+        scanAi: "ဘောင်ချာဖတ်ရန် (AI)",
+        scanning: "စစ်ဆေးနေသည်...",
+        expenseBtn: "အသုံးစရိတ် (-)",
+        incomeBtn: "ဝင်ငွေ (+)",
+        amountLbl: "ပမာဏ (¥)",
+        amountPh: "ဥပမာ- 1200",
+        dateLbl: "နေ့စွဲ",
+        catLbl: "အမျိုးအစား",
+        noteLbl: "မှတ်ချက်",
+        notePh: "ဥပမာ- စူပါမားကတ်၊ ထမင်းဘူး...",
+        saveTx: "စာရင်းသိမ်းရန်",
+        savingTx: "သိမ်းနေသည်...",
+        txHistory: "စာရင်းမှတ်တမ်း",
+        noTx: "ဤလအတွက် စာရင်းမရှိပါ။",
+        chartTitle: "လစဉ် အသုံးစရိတ် အချိုးအစား",
+        debtBook: "အကြွေးစာအုပ် (VND)",
+        debtSub: "VND ဖြင့် အကြွေးစာရင်း သီးသန့်မှတ်ရန်",
+        totalRemDebt: "ကျန်ရှိသော အကြွေးစုစုပေါင်း",
+        addNewDebt: "အကြွေးအသစ်ထည့်ရန်",
+        debtTitlePh: "အကြွေးအမည် (ဥပမာ- ဘဏ်ချေးငွေ)",
+        debtAmtPh: "မူလအကြွေးပမာဏ (VND)",
+        debtNotePh: "မှတ်ချက် / ဆပ်ရမည့်ရက်",
+        addDebtBtn: "+ အကြွေးထည့်ရန်",
+        addingDebt: "ထည့်နေသည်...",
+        noDebt: "အကြွေးစာရင်း မရှိသေးပါ။",
+        noNote: "မှတ်ချက်မရှိပါ",
+        origDebt: "မူလ:",
+        paidDebt: "ဆပ်ပြီး:",
+        remDebt: "ကျန်ငွေ:",
+        doneDebt: "ဆပ်ပြီး ✓",
+        payMoreBtn: "+ ခွဲဆပ်ရန်",
+        deleteBtn: "ဖျက်ရန်",
+        monthlyBudget: "လစဉ်ဘတ်ဂျက်",
+        weeklyBudget: "အပတ်စဉ်ဘတ်ဂျက်",
+        monthPeriod: "လ",
+        weekPeriod: "အပတ်",
+        thisWeek: "ယခုအပတ်",
+        lblTotalLimit: "စုစုပေါင်းကန့်သတ်ချက်:",
+        catBudgetsHeader: "အမျိုးအစားအလိုက် ဘတ်ဂျက်",
+        catCount: "({n} မျိုး)",
+        noBudget: "ကန့်သတ်ချက် မရှိသေးပါ",
+        overBudget: "ဘတ်ဂျက်ကျော်လွန်ငွေ: ",
+        leftBudget: "လက်ကျန်: ",
+        overLimitShort: "ကျော်လွန် ",
+        nearLimitShort: "ကန့်သတ်ချက်နီးပါး",
+        noCatBudgetSet: "အမျိုးအစားအလိုက် ဘတ်ဂျက်မသတ်မှတ်ရသေးပါ။",
+        setLimitNow: "+ ယခု သတ်မှတ်ရန်",
+        setBudgetBtn: "➕ ဘတ်ဂျက်သတ်မှတ်",
+        budgetModalTitle: "ဘတ်ဂျက် သတ်မှတ်ရန်",
+        budgetModalSub: "စုစုပေါင်းနှင့် အမျိုးအစားအလိုက် ဘတ်ဂျက်ခွဲဝေရန် (လ / အပတ်)",
+        tabModalMonth: "📅 လစဉ်ဘတ်ဂျက်",
+        tabModalWeek: "🗓️ အပတ်စဉ်ဘတ်ဂျက်",
+        divideFromMonthNote: "လစဉ်ဘတ်ဂျက်မှ အလိုအလျောက်တွက်ချက်ရန်:",
+        divideFromMonthBtn: "⚡ လစဉ်မှခွဲဝေရန် (÷ 4)",
+        totalMonthlyBudgetLbl: "လစဉ် စုစုပေါင်းဘတ်ဂျက် (¥)",
+        totalWeeklyBudgetLbl: "အပတ်စဉ် စုစုပေါင်းဘတ်ဂျက် (¥)",
+        syncSumBtn: "အမျိုးအစားစုစုပေါင်းကိုယူရန်",
+        sumFromCats: "အမျိုးအစားများမှ စုစုပေါင်း:",
+        stdCatsTitle: "မူလ အမျိုးအစားကန့်သတ်ချက် (¥):",
+        customCatsTitle: "စိတ်ကြိုက်အမျိုးအစားများ:",
+        noCustomCatsNote: "စိတ်ကြိုက်အမျိုးအစား မရှိသေးပါ။ ထည့်သွင်းရန် အောက်တွင် အမည်ရိုက်ပါ။",
+        addNewCatTitle: "စိတ်ကြိုက်အမျိုးအစား အသစ်ထည့်ရန်:",
+        newCatPh: "အမျိုးအစားအမည်အသစ် (ဥပမာ- အပန်းဖြေ၊ အားကစား...)",
+        addCatBtn: "+ အမျိုးအစားထည့်",
+        cancelBtn: "ပယ်ဖျက်",
+        saveBudgetBtn: "ဘတ်ဂျက်သိမ်းရန်",
+        savingBudgetBtn: "သိမ်းနေသည်...",
+        undoCalc: "↩ ပြန်ပြင်",
+        applyCalcBtn: "အသုံးပြု",
+        calcOperandPh: "တွက်ချက်မည့်ဂဏန်း...",
+        cats: {
+          "Ăn uống": "အစားအသောက်",
+          "Mua sắm": "ဈေးဝယ်",
+          "Đi lại": "သွားလာရေး",
+          "Nhà cửa & Hóa đơn": "နေထိုင်မှုနှင့် မီတာခ",
+          "Học tập / Công việc": "ပညာရေး / အလုပ်",
+          "Lương": "လစာ",
+          "Khác": "အခြား"
+        }
+      }
+    };
+
+    let currentLang = localStorage.getItem("CASHIES_LANG") || "vi";
+
+    function getCurrentLang() {
+      return currentLang;
+    }
+
+    function t(key) {
+      const l = i18n[currentLang] || i18n.vi;
+      return (l && l[key] !== undefined) ? l[key] : ((i18n.vi && i18n.vi[key] !== undefined) ? i18n.vi[key] : key);
+    }
+
+    function tCat(catKey) {
+      if (!catKey) return "";
+      const l = i18n[currentLang] || i18n.vi;
+      if (l && l.cats && l.cats[catKey]) {
+        return l.cats[catKey];
+      }
+      const allLangs = ["vi", "en", "ja", "my"];
+      for (const langCode of allLangs) {
+        const dict = i18n[langCode] && i18n[langCode].cats;
+        if (dict) {
+          for (const [canonKey, translatedName] of Object.entries(dict)) {
+            if (translatedName === catKey) {
+              return (l && l.cats && l.cats[canonKey]) ? l.cats[canonKey] : canonKey;
+            }
+          }
+        }
+      }
+      return catKey;
+    }
+
+    // ==========================================
+    // 2.1 BIẾN TRẠNG THÁI (STATE)
     // ==========================================
     let currentUser = null;
     let transactions = [];
     let debts = [];
     let currentType = "expense";
+    let currentBudgetPeriod = localStorage.getItem("CASHIES_BUDGET_PERIOD") || "month"; // "month" | "week"
     let monthlyBudget = 0;
     let categoryBudgets = {};
+    let weeklyBudget = 0;
+    let weeklyCategoryBudgets = {};
     let customCategories = [];
     let chartInstance = null;
     let isSubmittingTx = false;
@@ -431,6 +912,8 @@
     let currentMonthNet = 0;
     let lastOriginalAmount = null;
     let activeCalcOp = "/";
+    let activeModalTab = "month";
+    let tempCustomCats = [];
 
     const DEFAULT_BUDGET_CATS = [
       { key: "Ăn uống", icon: "🍜" },
@@ -455,6 +938,12 @@
     const netBalanceEl = document.getElementById("netBalance");
     const cardBalance = document.getElementById("cardBalance");
 
+    // Section 7: Budget Card Elements
+    const budgetHeading = document.getElementById("budgetHeading");
+    const btnBudgetPeriodMonth = document.getElementById("btnBudgetPeriodMonth");
+    const btnBudgetPeriodWeek = document.getElementById("btnBudgetPeriodWeek");
+    const budgetPeriodScopeBadge = document.getElementById("budgetPeriodScopeBadge");
+    const lblTotalLimit = document.getElementById("lblTotalLimit");
     const budgetDisplay = document.getElementById("budgetDisplay");
     const btnSetBudget = document.getElementById("btnSetBudget");
     const btnOpenBudgetModal = document.getElementById("btnOpenBudgetModal");
@@ -462,18 +951,41 @@
     const budgetStatus = document.getElementById("budgetStatus");
     const budgetPercent = document.getElementById("budgetPercent");
     const categoryBudgetList = document.getElementById("categoryBudgetList");
+    const catBudgetsHeader = document.getElementById("catBudgetsHeader");
     const catBudgetsActiveCount = document.getElementById("catBudgetsActiveCount");
 
-    // Modal Ngân sách & Danh mục
+    // Modal Ngân sách & Danh mục (Tháng & Tuần)
     const budgetModal = document.getElementById("budgetModal");
+    const budgetModalTitle = document.getElementById("budgetModalTitle");
+    const budgetModalSub = document.getElementById("budgetModalSub");
     const btnCloseBudgetModal = document.getElementById("btnCloseBudgetModal");
     const btnCancelBudgetModal = document.getElementById("btnCancelBudgetModal");
     const btnSaveBudgetModal = document.getElementById("btnSaveBudgetModal");
+    const tabModalMonth = document.getElementById("tabModalMonth");
+    const tabModalWeek = document.getElementById("tabModalWeek");
+    const panelModalMonth = document.getElementById("panelModalMonth");
+    const panelModalWeek = document.getElementById("panelModalWeek");
+
+    // Month Modal Elements
+    const lblTotalMonthlyBudget = document.getElementById("lblTotalMonthlyBudget");
     const inputTotalBudget = document.getElementById("inputTotalBudget");
-    const btnSyncSumCategories = document.getElementById("btnSyncSumCategories");
-    const calculatedSumCatBudgets = document.getElementById("calculatedSumCatBudgets");
-    const standardCatBudgetInputs = document.getElementById("standardCatBudgetInputs");
-    const customCatBudgetInputs = document.getElementById("customCatBudgetInputs");
+    const btnSyncSumCategoriesMonth = document.getElementById("btnSyncSumCategoriesMonth");
+    const calculatedSumCatBudgetsMonth = document.getElementById("calculatedSumCatBudgetsMonth");
+    const standardCatBudgetInputsMonth = document.getElementById("standardCatBudgetInputsMonth");
+    const customCatBudgetInputsMonth = document.getElementById("customCatBudgetInputsMonth");
+
+    // Week Modal Elements
+    const lblDivideFromMonthNote = document.getElementById("lblDivideFromMonthNote");
+    const btnDivideFromMonth = document.getElementById("btnDivideFromMonth");
+    const lblTotalWeeklyBudget = document.getElementById("lblTotalWeeklyBudget");
+    const inputTotalBudgetWeekly = document.getElementById("inputTotalBudgetWeekly");
+    const btnSyncSumCategoriesWeek = document.getElementById("btnSyncSumCategoriesWeek");
+    const calculatedSumCatBudgetsWeek = document.getElementById("calculatedSumCatBudgetsWeek");
+    const standardCatBudgetInputsWeek = document.getElementById("standardCatBudgetInputsWeek");
+    const customCatBudgetInputsWeek = document.getElementById("customCatBudgetInputsWeek");
+
+    // Shared Add Custom Category Elements
+    const lblAddNewCatTitle = document.getElementById("lblAddNewCatTitle");
     const inputNewCatName = document.getElementById("inputNewCatName");
     const btnAddCustomCat = document.getElementById("btnAddCustomCat");
 
@@ -669,6 +1181,8 @@
           const data = doc.data();
           monthlyBudget = (typeof data.monthlyBudget === "number") ? data.monthlyBudget : 0;
           categoryBudgets = (data.categoryBudgets && typeof data.categoryBudgets === "object") ? data.categoryBudgets : {};
+          weeklyBudget = (typeof data.weeklyBudget === "number") ? data.weeklyBudget : 0;
+          weeklyCategoryBudgets = (data.weeklyCategoryBudgets && typeof data.weeklyCategoryBudgets === "object") ? data.weeklyCategoryBudgets : {};
           customCategories = Array.isArray(data.customCategories) ? data.customCategories : [];
         }
       } catch (err) {
@@ -685,7 +1199,7 @@
         "Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc"
       ];
       let optionsHtml = standardList.map(function(c) {
-        return '<option value="' + c + '">' + c + '</option>';
+        return '<option value="' + c + '">' + tCat(c) + '</option>';
       }).join("");
 
       if (customCategories && customCategories.length > 0) {
@@ -694,8 +1208,8 @@
         }).join("");
       }
 
-      optionsHtml += '<option value="Lương">Lương</option>';
-      optionsHtml += '<option value="Khác">Khác</option>';
+      optionsHtml += '<option value="Lương">' + tCat("Lương") + '</option>';
+      optionsHtml += '<option value="Khác">' + tCat("Khác") + '</option>';
       txCategory.innerHTML = optionsHtml;
 
       if (currentVal && Array.from(txCategory.options).some(function(o) { return o.value === currentVal; })) {
@@ -704,36 +1218,117 @@
     }
 
     // ==========================================
-    // 4.1 QUẢN LÝ NGÂN SÁCH THÁNG & DANH MỤC
+    // 4.1 QUẢN LÝ NGÂN SÁCH (THÁNG & TUẦN)
     // ==========================================
-    let tempCustomCats = [];
+    function getCurrentWeekRange() {
+      const now = new Date();
+      const day = now.getDay(); // 0: CN, 1: T2, ...
+      const diffToMonday = (day === 0 ? -6 : 1) - day;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diffToMonday);
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+
+      const pad = function(n) { return String(n).padStart(2, '0'); };
+      const formatDate = function(d) {
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+      };
+
+      return {
+        start: formatDate(monday),
+        end: formatDate(sunday),
+        displayStart: pad(monday.getDate()) + "/" + pad(monday.getMonth() + 1),
+        displayEnd: pad(sunday.getDate()) + "/" + pad(sunday.getMonth() + 1)
+      };
+    }
+
+    function setBudgetPeriod(period) {
+      currentBudgetPeriod = period;
+      localStorage.setItem("CASHIES_BUDGET_PERIOD", period);
+      updateBudgetPeriodUI();
+      renderAll();
+    }
+
+    function updateBudgetPeriodUI() {
+      if (btnBudgetPeriodMonth && btnBudgetPeriodWeek) {
+        if (currentBudgetPeriod === "month") {
+          btnBudgetPeriodMonth.className = "px-2.5 py-1 rounded-md bg-white shadow-2xs text-indigo-600 transition font-semibold";
+          btnBudgetPeriodWeek.className = "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition font-semibold";
+        } else {
+          btnBudgetPeriodWeek.className = "px-2.5 py-1 rounded-md bg-white shadow-2xs text-indigo-600 transition font-semibold";
+          btnBudgetPeriodMonth.className = "px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-800 transition font-semibold";
+        }
+        btnBudgetPeriodMonth.innerText = t("monthPeriod");
+        btnBudgetPeriodWeek.innerText = t("weekPeriod");
+      }
+
+      if (budgetHeading) {
+        budgetHeading.innerText = t(currentBudgetPeriod === "month" ? "monthlyBudget" : "weeklyBudget");
+      }
+      if (lblTotalLimit) {
+        lblTotalLimit.innerText = t("lblTotalLimit");
+      }
+      if (catBudgetsHeader) {
+        catBudgetsHeader.innerText = t("catBudgetsHeader");
+      }
+      if (btnOpenBudgetModal) {
+        const span = btnOpenBudgetModal.querySelector("span");
+        if (span) span.innerText = t("setBudgetBtn");
+      }
+    }
+
+    function setModalTab(tab) {
+      activeModalTab = tab;
+      if (tab === "month") {
+        if (tabModalMonth) tabModalMonth.className = "py-2 rounded-lg bg-white text-indigo-600 shadow-2xs transition font-semibold";
+        if (tabModalWeek) tabModalWeek.className = "py-2 rounded-lg text-slate-500 hover:text-slate-800 transition font-semibold";
+        if (panelModalMonth) panelModalMonth.classList.remove("hidden");
+        if (panelModalWeek) panelModalWeek.classList.add("hidden");
+      } else {
+        if (tabModalWeek) tabModalWeek.className = "py-2 rounded-lg bg-white text-indigo-600 shadow-2xs transition font-semibold";
+        if (tabModalMonth) tabModalMonth.className = "py-2 rounded-lg text-slate-500 hover:text-slate-800 transition font-semibold";
+        if (panelModalWeek) panelModalWeek.classList.remove("hidden");
+        if (panelModalMonth) panelModalMonth.classList.add("hidden");
+      }
+    }
 
     function openBudgetModal() {
       if (!currentUser) {
-        alert("Vui lòng đăng nhập để thiết lập ngân sách!");
+        alert(t("loginDesc") || "Vui lòng đăng nhập!");
         return;
       }
       tempCustomCats = Array.isArray(customCategories) ? [...customCategories] : [];
-      inputTotalBudget.value = monthlyBudget > 0 ? monthlyBudget : "";
-      renderModalStandardCatInputs();
-      renderModalCustomCatInputs();
-      updateModalCalculatedSum();
+      if (inputTotalBudget) inputTotalBudget.value = monthlyBudget > 0 ? monthlyBudget : "";
+      if (inputTotalBudgetWeekly) inputTotalBudgetWeekly.value = weeklyBudget > 0 ? weeklyBudget : "";
+      setModalTab(currentBudgetPeriod || "month");
+      renderModalStandardCatInputs("month");
+      renderModalCustomCatInputs("month");
+      updateModalCalculatedSum("month");
+      renderModalStandardCatInputs("week");
+      renderModalCustomCatInputs("week");
+      updateModalCalculatedSum("week");
       budgetModal.classList.remove("hidden");
     }
 
     function closeBudgetModal() {
       budgetModal.classList.add("hidden");
-      inputNewCatName.value = "";
+      if (inputNewCatName) inputNewCatName.value = "";
     }
 
-    function renderModalStandardCatInputs() {
-      if (!standardCatBudgetInputs) return;
-      standardCatBudgetInputs.innerHTML = DEFAULT_BUDGET_CATS.map(function(cat) {
-        const val = (categoryBudgets && categoryBudgets[cat.key]) ? categoryBudgets[cat.key] : "";
+    function renderModalStandardCatInputs(tab) {
+      const container = tab === "month" ? standardCatBudgetInputsMonth : standardCatBudgetInputsWeek;
+      if (!container) return;
+      const sourceMap = tab === "month" ? categoryBudgets : weeklyCategoryBudgets;
+
+      container.innerHTML = DEFAULT_BUDGET_CATS.map(function(cat) {
+        const val = (sourceMap && sourceMap[cat.key]) ? sourceMap[cat.key] : "";
         return '<div class="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">' +
           '<div class="flex items-center gap-2 min-w-[130px] sm:min-w-[150px]">' +
             '<span class="text-base">' + cat.icon + '</span>' +
-            '<span class="font-semibold text-xs text-slate-700">' + cat.key + '</span>' +
+            '<span class="font-semibold text-xs text-slate-700">' + tCat(cat.key) + '</span>' +
           '</div>' +
           '<div class="flex items-center gap-1.5 flex-1 max-w-[160px]">' +
             '<span class="text-xs text-slate-400 font-medium">¥</span>' +
@@ -743,18 +1338,21 @@
         '</div>';
       }).join("");
 
-      attachModalInputListeners();
+      attachModalInputListeners(tab);
     }
 
-    function renderModalCustomCatInputs() {
-      if (!customCatBudgetInputs) return;
+    function renderModalCustomCatInputs(tab) {
+      const container = tab === "month" ? customCatBudgetInputsMonth : customCatBudgetInputsWeek;
+      if (!container) return;
+      const sourceMap = tab === "month" ? categoryBudgets : weeklyCategoryBudgets;
+
       if (tempCustomCats.length === 0) {
-        customCatBudgetInputs.innerHTML = '<p class="text-[11px] text-slate-400 italic py-1">Chưa có danh mục tự đặt nào. Nhập tên bên dưới để thêm.</p>';
+        container.innerHTML = '<p class="text-[11px] text-slate-400 italic py-1">' + t("noCustomCatsNote") + '</p>';
         return;
       }
 
-      customCatBudgetInputs.innerHTML = tempCustomCats.map(function(catName, idx) {
-        const val = (categoryBudgets && categoryBudgets[catName]) ? categoryBudgets[catName] : "";
+      container.innerHTML = tempCustomCats.map(function(catName, idx) {
+        const val = (sourceMap && sourceMap[catName]) ? sourceMap[catName] : "";
         return '<div class="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">' +
           '<div class="flex items-center gap-1.5 flex-1 truncate">' +
             '<span class="text-sm">🏷️</span>' +
@@ -764,32 +1362,39 @@
             '<span class="text-xs text-slate-400 font-medium">¥</span>' +
             '<input type="number" min="0" data-cat-key="' + catName + '" value="' + val + '" placeholder="0" ' +
               'class="modal-cat-input w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-right focus:outline-none focus:ring-1 focus:ring-indigo-400">' +
-            '<button type="button" onclick="removeTempCustomCat(' + idx + ')" class="text-slate-400 hover:text-rose-500 p-1 text-xs transition" title="Xóa danh mục này">🗑️</button>' +
+            '<button type="button" onclick="removeTempCustomCat(' + idx + ')" class="text-slate-400 hover:text-rose-500 p-1 text-xs transition" title="' + t("deleteBtn") + '">🗑️</button>' +
           '</div>' +
         '</div>';
       }).join("");
 
-      attachModalInputListeners();
+      attachModalInputListeners(tab);
     }
 
     window.removeTempCustomCat = function(idx) {
       if (idx >= 0 && idx < tempCustomCats.length) {
         tempCustomCats.splice(idx, 1);
-        renderModalCustomCatInputs();
-        updateModalCalculatedSum();
+        renderModalCustomCatInputs("month");
+        renderModalCustomCatInputs("week");
+        updateModalCalculatedSum("month");
+        updateModalCalculatedSum("week");
       }
     };
 
-    function attachModalInputListeners() {
-      const inputs = budgetModal.querySelectorAll(".modal-cat-input");
+    function attachModalInputListeners(tab) {
+      const panel = tab === "month" ? panelModalMonth : panelModalWeek;
+      if (!panel) return;
+      const inputs = panel.querySelectorAll(".modal-cat-input");
       inputs.forEach(function(inp) {
-        inp.removeEventListener("input", updateModalCalculatedSum);
-        inp.addEventListener("input", updateModalCalculatedSum);
+        inp.oninput = function() {
+          updateModalCalculatedSum(tab);
+        };
       });
     }
 
-    function getSumFromModalCatInputs() {
-      const inputs = budgetModal.querySelectorAll(".modal-cat-input");
+    function getSumFromModalCatInputs(tab) {
+      const panel = tab === "month" ? panelModalMonth : panelModalWeek;
+      if (!panel) return 0;
+      const inputs = panel.querySelectorAll(".modal-cat-input");
       let sum = 0;
       inputs.forEach(function(inp) {
         const v = parseInt(inp.value, 10);
@@ -800,17 +1405,57 @@
       return sum;
     }
 
-    function updateModalCalculatedSum() {
-      const sum = getSumFromModalCatInputs();
-      if (calculatedSumCatBudgets) {
-        calculatedSumCatBudgets.innerText = formatJPY(sum);
+    function updateModalCalculatedSum(tab) {
+      const sum = getSumFromModalCatInputs(tab);
+      const targetEl = tab === "month" ? calculatedSumCatBudgetsMonth : calculatedSumCatBudgetsWeek;
+      if (targetEl) {
+        targetEl.innerText = formatJPY(sum);
       }
     }
 
-    if (btnSyncSumCategories) {
-      btnSyncSumCategories.addEventListener("click", function() {
-        const sum = getSumFromModalCatInputs();
+    if (btnDivideFromMonth) {
+      btnDivideFromMonth.addEventListener("click", function() {
+        let mTotal = parseInt(inputTotalBudget.value, 10);
+        if (isNaN(mTotal) || mTotal <= 0) {
+          mTotal = getSumFromModalCatInputs("month");
+        }
+        if (mTotal > 0) {
+          inputTotalBudgetWeekly.value = Math.round(mTotal / 4);
+        }
+
+        const monthStdInputs = panelModalMonth.querySelectorAll("#standardCatBudgetInputsMonth .modal-cat-input");
+        const weekStdInputs = panelModalWeek.querySelectorAll("#standardCatBudgetInputsWeek .modal-cat-input");
+        monthStdInputs.forEach(function(minp, i) {
+          const mv = parseInt(minp.value, 10);
+          if (weekStdInputs[i]) {
+            weekStdInputs[i].value = (!isNaN(mv) && mv > 0) ? Math.round(mv / 4) : "";
+          }
+        });
+
+        const monthCustInputs = panelModalMonth.querySelectorAll("#customCatBudgetInputsMonth .modal-cat-input");
+        const weekCustInputs = panelModalWeek.querySelectorAll("#customCatBudgetInputsWeek .modal-cat-input");
+        monthCustInputs.forEach(function(minp, i) {
+          const mv = parseInt(minp.value, 10);
+          if (weekCustInputs[i]) {
+            weekCustInputs[i].value = (!isNaN(mv) && mv > 0) ? Math.round(mv / 4) : "";
+          }
+        });
+
+        updateModalCalculatedSum("week");
+      });
+    }
+
+    if (btnSyncSumCategoriesMonth) {
+      btnSyncSumCategoriesMonth.addEventListener("click", function() {
+        const sum = getSumFromModalCatInputs("month");
         inputTotalBudget.value = sum > 0 ? sum : "";
+      });
+    }
+
+    if (btnSyncSumCategoriesWeek) {
+      btnSyncSumCategoriesWeek.addEventListener("click", function() {
+        const sum = getSumFromModalCatInputs("week");
+        inputTotalBudgetWeekly.value = sum > 0 ? sum : "";
       });
     }
 
@@ -833,8 +1478,10 @@
 
         tempCustomCats.push(name);
         inputNewCatName.value = "";
-        renderModalCustomCatInputs();
-        updateModalCalculatedSum();
+        renderModalCustomCatInputs("month");
+        renderModalCustomCatInputs("week");
+        updateModalCalculatedSum("month");
+        updateModalCalculatedSum("week");
       });
     }
 
@@ -842,32 +1489,49 @@
       btnSaveBudgetModal.addEventListener("click", async function() {
         if (!currentUser) return;
         btnSaveBudgetModal.disabled = true;
-        btnSaveBudgetModal.innerText = "Đang lưu...";
+        btnSaveBudgetModal.innerText = t("savingBudgetBtn") || "Đang lưu...";
 
-        const inputs = budgetModal.querySelectorAll(".modal-cat-input");
-        const newCategoryBudgets = {};
-        inputs.forEach(function(inp) {
+        const monthInputs = panelModalMonth.querySelectorAll(".modal-cat-input");
+        const newMonthCategoryBudgets = {};
+        monthInputs.forEach(function(inp) {
           const key = inp.dataset.catKey;
           const v = parseInt(inp.value, 10);
           if (key && !isNaN(v) && v > 0) {
-            newCategoryBudgets[key] = v;
+            newMonthCategoryBudgets[key] = v;
           }
         });
+        let parsedMonthlyBudget = parseInt(inputTotalBudget.value, 10);
+        if (isNaN(parsedMonthlyBudget) || parsedMonthlyBudget <= 0) {
+          parsedMonthlyBudget = getSumFromModalCatInputs("month");
+        }
 
-        let parsedTotal = parseInt(inputTotalBudget.value, 10);
-        if (isNaN(parsedTotal) || parsedTotal <= 0) {
-          parsedTotal = getSumFromModalCatInputs();
+        const weekInputs = panelModalWeek.querySelectorAll(".modal-cat-input");
+        const newWeeklyCategoryBudgets = {};
+        weekInputs.forEach(function(inp) {
+          const key = inp.dataset.catKey;
+          const v = parseInt(inp.value, 10);
+          if (key && !isNaN(v) && v > 0) {
+            newWeeklyCategoryBudgets[key] = v;
+          }
+        });
+        let parsedWeeklyBudget = parseInt(inputTotalBudgetWeekly.value, 10);
+        if (isNaN(parsedWeeklyBudget) || parsedWeeklyBudget <= 0) {
+          parsedWeeklyBudget = getSumFromModalCatInputs("week");
         }
 
         try {
           await db.collection("users").doc(currentUser.uid).set({
-            monthlyBudget: parsedTotal,
-            categoryBudgets: newCategoryBudgets,
+            monthlyBudget: parsedMonthlyBudget,
+            categoryBudgets: newMonthCategoryBudgets,
+            weeklyBudget: parsedWeeklyBudget,
+            weeklyCategoryBudgets: newWeeklyCategoryBudgets,
             customCategories: tempCustomCats
           }, { merge: true });
 
-          monthlyBudget = parsedTotal;
-          categoryBudgets = newCategoryBudgets;
+          monthlyBudget = parsedMonthlyBudget;
+          categoryBudgets = newMonthCategoryBudgets;
+          weeklyBudget = parsedWeeklyBudget;
+          weeklyCategoryBudgets = newWeeklyCategoryBudgets;
           customCategories = [...tempCustomCats];
 
           updateCategoryDropdown();
@@ -877,7 +1541,7 @@
           alert("Lỗi khi lưu ngân sách: " + err.message);
         } finally {
           btnSaveBudgetModal.disabled = false;
-          btnSaveBudgetModal.innerText = "Lưu ngân sách";
+          btnSaveBudgetModal.innerText = t("saveBudgetBtn");
         }
       });
     }
@@ -886,6 +1550,28 @@
     if (btnSetBudget) btnSetBudget.addEventListener("click", openBudgetModal);
     if (btnCloseBudgetModal) btnCloseBudgetModal.addEventListener("click", closeBudgetModal);
     if (btnCancelBudgetModal) btnCancelBudgetModal.addEventListener("click", closeBudgetModal);
+
+    if (btnBudgetPeriodMonth) {
+      btnBudgetPeriodMonth.addEventListener("click", function() {
+        setBudgetPeriod("month");
+      });
+    }
+    if (btnBudgetPeriodWeek) {
+      btnBudgetPeriodWeek.addEventListener("click", function() {
+        setBudgetPeriod("week");
+      });
+    }
+
+    if (tabModalMonth) {
+      tabModalMonth.addEventListener("click", function() {
+        setModalTab("month");
+      });
+    }
+    if (tabModalWeek) {
+      tabModalWeek.addEventListener("click", function() {
+        setModalTab("week");
+      });
+    }
 
     cardBalance.addEventListener("click", async function() {
       if (!currentUser) return;
@@ -1263,7 +1949,7 @@
       debtList.innerHTML = debts.map(function(d) {
         const paid = d.paidAmount ? Number(d.paidAmount) : 0;
         const orig = d.originalAmount ? Number(d.originalAmount) : 0;
-        const noteText = d.note ? d.note : "Không có ghi chú";
+        const noteText = d.note ? d.note : t("noNote");
         const remaining = Math.max(0, orig - paid);
         totalRemaining += remaining;
         const progress = orig > 0 ? Math.min(100, Math.round((paid / orig) * 100)) : 0;
@@ -1272,19 +1958,19 @@
         const cardClass = isDone ? "bg-slate-50 border-slate-200 opacity-60" : "bg-white border-slate-200";
         const titleClass = isDone ? "line-through text-slate-500" : "";
         const statusColor = isDone ? "text-emerald-600" : "text-rose-600";
-        const statusText = isDone ? "Đã trả xong ✓" : "Còn: " + formatVND(remaining);
+        const statusText = isDone ? t("doneDebt") : (t("remDebt") + " " + formatVND(remaining));
         const barColor = isDone ? "bg-emerald-500" : "bg-indigo-600";
-        const payBtnHtml = isDone ? "" : '<button onclick="payDebt(\'' + d.id + '\', ' + paid + ', ' + orig + ')" class="text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 px-2 py-0.5 rounded transition">+ Trả bớt</button>';
+        const payBtnHtml = isDone ? "" : '<button onclick="payDebt(\'' + d.id + '\', ' + paid + ', ' + orig + ')" class="text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 px-2 py-0.5 rounded transition">' + t("payMoreBtn") + '</button>';
 
         return '<div class="p-3 rounded-xl border ' + cardClass + ' space-y-2">' +
           '<div class="flex items-center justify-between">' +
             '<div>' +
               '<p class="font-bold text-xs text-slate-800 ' + titleClass + '">' + d.title + '</p>' +
-              '<p class="text-[10px] text-slate-400">' + noteText + ' · Gốc: ' + formatVND(orig) + '</p>' +
+              '<p class="text-[10px] text-slate-400">' + noteText + ' · ' + t("origDebt") + ' ' + formatVND(orig) + '</p>' +
             '</div>' +
             '<div class="text-right">' +
               '<p class="text-xs font-bold ' + statusColor + '">' + statusText + '</p>' +
-              '<span class="text-[10px] text-slate-400">Đã trả: ' + formatVND(paid) + ' (' + progress + '%)</span>' +
+              '<span class="text-[10px] text-slate-400">' + t("paidDebt") + ' ' + formatVND(paid) + ' (' + progress + '%)</span>' +
             '</div>' +
           '</div>' +
           '<div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">' +
@@ -1292,7 +1978,7 @@
           '</div>' +
           '<div class="flex justify-end gap-2 pt-1 border-t border-slate-50">' +
             payBtnHtml +
-            '<button onclick="deleteDebt(\'' + d.id + '\')" class="text-[11px] text-slate-400 hover:text-rose-500 px-2 py-0.5 rounded transition">Xóa</button>' +
+            '<button onclick="deleteDebt(\'' + d.id + '\')" class="text-[11px] text-slate-400 hover:text-rose-500 px-2 py-0.5 rounded transition">' + t("deleteBtn") + '</button>' +
           '</div>' +
         '</div>';
       }).join("");
@@ -1310,21 +1996,21 @@
 
     function renderAll() {
       const selectedMonth = filterMonth.value;
-      const filtered = transactions.filter(function(t) {
-        return t.date && t.date.startsWith(selectedMonth);
+      const filtered = transactions.filter(function(tItem) {
+        return tItem.date && tItem.date.startsWith(selectedMonth);
       });
 
       let inc = 0;
       let exp = 0;
-      const catMap = {};
+      const monthCatMap = {};
 
-      filtered.forEach(function(t) {
-        if (t.type === "income") {
-          inc += t.amount;
+      filtered.forEach(function(tItem) {
+        if (tItem.type === "income") {
+          inc += tItem.amount;
         } else {
-          exp += t.amount;
-          const prev = catMap[t.category] ? catMap[t.category] : 0;
-          catMap[t.category] = prev + t.amount;
+          exp += tItem.amount;
+          const prev = monthCatMap[tItem.category] ? monthCatMap[tItem.category] : 0;
+          monthCatMap[tItem.category] = prev + tItem.amount;
         }
       });
 
@@ -1334,66 +2020,105 @@
       netBalanceEl.innerText = (currentMonthNet < 0 ? "-" : "") + formatJPY(Math.abs(currentMonthNet));
       netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
 
-      renderBudget(exp);
-      renderCategoryBudgets(catMap);
-      renderChart(catMap);
+      // Tính toán giao dịch trong tuần này
+      const weekRange = getCurrentWeekRange();
+      const filteredWeek = transactions.filter(function(tItem) {
+        return tItem.date && tItem.date >= weekRange.start && tItem.date <= weekRange.end;
+      });
+      let weekExp = 0;
+      const weekCatMap = {};
+      filteredWeek.forEach(function(tItem) {
+        if (tItem.type === "expense") {
+          weekExp += tItem.amount;
+          const prev = weekCatMap[tItem.category] ? weekCatMap[tItem.category] : 0;
+          weekCatMap[tItem.category] = prev + tItem.amount;
+        }
+      });
+
+      // Lựa chọn số liệu theo Kỳ ngân sách đang xem (Tháng hoặc Tuần)
+      let activeSpent = exp;
+      let activeLimit = monthlyBudget;
+      let activeCatMap = monthCatMap;
+      let activeCatLimits = categoryBudgets;
+
+      if (currentBudgetPeriod === "week") {
+        activeSpent = weekExp;
+        activeLimit = weeklyBudget;
+        activeCatMap = weekCatMap;
+        activeCatLimits = weeklyCategoryBudgets;
+        if (budgetPeriodScopeBadge) {
+          budgetPeriodScopeBadge.innerText = t("thisWeek") + " (" + weekRange.displayStart + " - " + weekRange.displayEnd + ")";
+        }
+      } else {
+        if (budgetPeriodScopeBadge) {
+          budgetPeriodScopeBadge.innerText = selectedMonth;
+        }
+      }
+
+      renderBudget(activeSpent, activeLimit);
+      renderCategoryBudgets(activeCatMap, activeCatLimits);
+      renderChart(monthCatMap);
       renderList(filtered);
     }
 
-    function renderBudget(totalExp) {
-      const expVal = totalExp ? Number(totalExp) : 0;
-      budgetDisplay.innerText = formatJPY(monthlyBudget);
-      if (monthlyBudget <= 0) {
+    function renderBudget(spent, limit) {
+      const expVal = spent ? Number(spent) : 0;
+      const limitVal = limit ? Number(limit) : 0;
+      budgetDisplay.innerText = formatJPY(limitVal);
+
+      if (limitVal <= 0) {
         budgetProgress.style.width = "0%";
-        budgetStatus.innerText = "Chưa đặt ngân sách";
+        budgetStatus.innerText = t("noBudget");
         budgetPercent.innerText = "0%";
         return;
       }
 
-      const percent = Math.min(Math.round((expVal / monthlyBudget) * 100), 100);
+      const percent = Math.min(Math.round((expVal / limitVal) * 100), 100);
       budgetPercent.innerText = percent + "%";
       budgetProgress.style.width = percent + "%";
 
-      if (expVal > monthlyBudget) {
+      if (expVal > limitVal) {
         budgetProgress.className = "h-2.5 rounded-full bg-rose-500 transition-all duration-300";
-        budgetStatus.innerText = "Vượt ngân sách: " + formatJPY(expVal - monthlyBudget);
+        budgetStatus.innerText = t("overBudget") + formatJPY(expVal - limitVal);
       } else {
         budgetProgress.className = "h-2.5 rounded-full bg-emerald-500 transition-all duration-300";
-        budgetStatus.innerText = "Còn lại: " + formatJPY(monthlyBudget - expVal);
+        budgetStatus.innerText = t("leftBudget") + formatJPY(limitVal - expVal);
       }
     }
 
-    function renderCategoryBudgets(catMap) {
+    function renderCategoryBudgets(catMap, limitMap) {
       if (!categoryBudgetList) return;
 
       const allTrackedCats = [];
 
       DEFAULT_BUDGET_CATS.forEach(function(c) {
-        const limit = (categoryBudgets && categoryBudgets[c.key]) ? categoryBudgets[c.key] : 0;
+        const limit = (limitMap && limitMap[c.key]) ? limitMap[c.key] : 0;
         if (limit > 0) {
-          allTrackedCats.push({ key: c.key, icon: c.icon, limit: limit });
+          allTrackedCats.push({ key: c.key, icon: c.icon, limit: limit, isCustom: false });
         }
       });
 
       if (customCategories && customCategories.length > 0) {
         customCategories.forEach(function(catName) {
-          const limit = (categoryBudgets && categoryBudgets[catName]) ? categoryBudgets[catName] : 0;
+          const limit = (limitMap && limitMap[catName]) ? limitMap[catName] : 0;
           if (limit > 0) {
-            allTrackedCats.push({ key: catName, icon: "🏷️", limit: limit });
+            allTrackedCats.push({ key: catName, icon: "🏷️", limit: limit, isCustom: true });
           }
         });
       }
 
       if (catBudgetsActiveCount) {
-        catBudgetsActiveCount.innerText = allTrackedCats.length > 0 ? "(" + allTrackedCats.length + " danh mục)" : "";
+        catBudgetsActiveCount.innerText = allTrackedCats.length > 0 
+          ? t("catCount").replace("{n}", allTrackedCats.length) 
+          : "";
       }
 
       if (allTrackedCats.length === 0) {
         categoryBudgetList.innerHTML = 
           '<div class="text-center py-2.5 text-slate-400 text-xs bg-slate-50/70 rounded-xl p-3 border border-dashed border-slate-200">' +
-            '<p>Chưa phân chia hạn mức cho danh mục nào.</p>' +
+            '<p>' + t("noCatBudgetSet") + '</p>' +
             '<button type="button" onclick="openBudgetModal()" class="text-indigo-600 hover:underline font-semibold mt-1 inline-block">' +
-              '+ Thiết lập hạn mức ngay' +
+              t("setLimitNow") +
             '</button>' +
           '</div>';
         return;
@@ -1413,18 +2138,20 @@
         if (isOver) {
           barClass = "bg-rose-500";
           badgeClass = "bg-rose-50 text-rose-600 font-bold";
-          badgeText = "Vượt " + formatJPY(spent - limit);
+          badgeText = t("overLimitShort") + formatJPY(spent - limit);
         } else if (isWarning) {
           barClass = "bg-amber-500";
           badgeClass = "bg-amber-50 text-amber-700 font-bold";
-          badgeText = percent + "% (Gần trần)";
+          badgeText = percent + "% (" + t("nearLimitShort") + ")";
         }
+
+        const displayName = item.isCustom ? item.key : tCat(item.key);
 
         return '<div class="space-y-1 bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">' +
           '<div class="flex items-center justify-between text-xs">' +
             '<div class="flex items-center gap-1.5 truncate">' +
               '<span class="text-sm">' + item.icon + '</span>' +
-              '<span class="font-semibold text-slate-700 truncate">' + item.key + '</span>' +
+              '<span class="font-semibold text-slate-700 truncate">' + displayName + '</span>' +
             '</div>' +
             '<div class="flex items-center gap-2 text-right shrink-0">' +
               '<span class="text-[11px] font-semibold text-slate-600">' + formatJPY(spent) + ' <span class="text-slate-400 font-normal">/ ' + formatJPY(limit) + '</span></span>' +
@@ -1439,15 +2166,20 @@
     }
 
     function renderChart(catMap) {
-      const labels = Object.keys(catMap);
+      const rawLabels = Object.keys(catMap);
       const data = Object.values(catMap);
+      const displayLabels = rawLabels.map(function(lbl) {
+        return tCat(lbl);
+      });
 
       if (chartInstance) {
         chartInstance.destroy();
       }
 
-      const ctx = document.getElementById("categoryChart").getContext("2d");
-      if (labels.length === 0) {
+      const canvas = document.getElementById("categoryChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (rawLabels.length === 0) {
         ctx.clearRect(0, 0, 200, 200);
         return;
       }
@@ -1455,7 +2187,7 @@
       chartInstance = new Chart(ctx, {
         type: "doughnut",
         data: {
-          labels: labels,
+          labels: displayLabels,
           datasets: [{
             data: data,
             backgroundColor: [
@@ -1476,24 +2208,25 @@
     }
 
     function renderList(list) {
+      if (!txList) return;
       if (list.length === 0) {
-        txList.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Không có giao dịch nào trong tháng này.</p>';
+        txList.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">' + t("noTx") + '</p>';
         return;
       }
 
-      txList.innerHTML = list.map(function(t) {
-        const noteSpan = t.note ? '<span class="font-normal text-slate-400"> · ' + t.note + '</span>' : "";
-        const amountClass = t.type === "income" ? "text-emerald-600" : "text-slate-800";
-        const sign = t.type === "income" ? "+" : "-";
+      txList.innerHTML = list.map(function(tItem) {
+        const noteSpan = tItem.note ? '<span class="font-normal text-slate-400"> · ' + tItem.note + '</span>' : "";
+        const amountClass = tItem.type === "income" ? "text-emerald-600" : "text-slate-800";
+        const sign = tItem.type === "income" ? "+" : "-";
 
         return '<div class="py-2.5 flex items-center justify-between">' +
           '<div>' +
-            '<p class="font-semibold text-slate-800 text-xs">' + t.category + noteSpan + '</p>' +
-            '<p class="text-[11px] text-slate-400 mt-0.5">' + t.date + '</p>' +
+            '<p class="font-semibold text-slate-800 text-xs">' + tCat(tItem.category) + noteSpan + '</p>' +
+            '<p class="text-[11px] text-slate-400 mt-0.5">' + tItem.date + '</p>' +
           '</div>' +
           '<div class="flex items-center gap-2">' +
-            '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(t.amount) + '</span>' +
-            '<button onclick="deleteTx(\'' + t.id + '\')" class="text-slate-300 hover:text-rose-500 text-xs px-1">✕</button>' +
+            '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(tItem.amount) + '</span>' +
+            '<button onclick="deleteTx(\'' + tItem.id + '\')" class="text-slate-300 hover:text-rose-500 text-xs px-1">✕</button>' +
           '</div>' +
         '</div>';
       }).join("");
@@ -1735,341 +2468,11 @@
         receiptInput.value = "";
       }
     });
-  </script>
 
-  <!-- ========================================== -->
-  <!-- MODULE ĐA NGÔN NGỮ (ĐÃ FIX LỖI ĐƠ TRANG)   -->
-  <!-- ========================================== -->
-  <script>
-    (function() {
-      const i18n = {
-        vi: {
-          loginDesc: "Đăng nhập tài khoản Google để đồng bộ dữ liệu chi tiêu cá nhân.",
-          loginBtn: "Đăng nhập với Google",
-          appReady: "Hệ thống đã sẵn sàng ✓",
-          appInit: "Đang khởi tạo...",
-          connecting: "Đang kết nối...",
-          synced: "Đã đồng bộ",
-          syncErr: "Lỗi đồng bộ!",
-          keyTitle: "Cài đặt Gemini API Key",
-          logout: "Đăng xuất",
-          displayMonth: "Tháng hiển thị",
-          totalIncome: "Tổng Thu",
-          totalExpense: "Tổng Chi",
-          netBalance: "Số Dư",
-          recordTx: "Ghi nhận giao dịch",
-          scanAi: "Quét Hóa Đơn (AI)",
-          scanning: "Đang phân tích...",
-          expenseBtn: "Chi tiêu (-)",
-          incomeBtn: "Thu nhập (+)",
-          amountLbl: "Số tiền (¥)",
-          amountPh: "vd: 1200",
-          dateLbl: "Ngày giao dịch",
-          catLbl: "Danh mục",
-          noteLbl: "Ghi chú",
-          notePh: "vd: Siêu thị Gyomu, Bento...",
-          saveTx: "Lưu Giao Dịch",
-          savingTx: "Đang lưu...",
-          txHistory: "Lịch sử giao dịch",
-          noTx: "Không có giao dịch nào trong tháng này.",
-          chartTitle: "Tỷ lệ chi tiêu tháng",
-          debtBook: "Sổ Nợ (Việt Nam)",
-          debtSub: "Theo dõi nợ riêng bằng đơn vị VNĐ",
-          totalRemDebt: "Tổng nợ còn lại",
-          addNewDebt: "Thêm khoản nợ mới",
-          debtTitlePh: "Tên khoản nợ (vd: Vay ngân hàng)",
-          debtAmtPh: "Số tiền nợ gốc (VNĐ)",
-          debtNotePh: "Ghi chú / Hạn trả",
-          addDebtBtn: "+ Thêm khoản nợ",
-          addingDebt: "Đang thêm...",
-          noDebt: "Chưa có khoản nợ nào.",
-          noNote: "Không có ghi chú",
-          origDebt: "Gốc:",
-          paidDebt: "Đã trả:",
-          remDebt: "Còn:",
-          doneDebt: "Đã trả xong ✓",
-          payMoreBtn: "+ Trả bớt",
-          deleteBtn: "Xóa",
-          monthlyBudget: "Ngân sách tháng",
-          ceiling: "Trần:",
-          noBudget: "Chưa đặt ngân sách",
-          noBudgetInit: "Chưa đặt hạn mức",
-          overBudget: "Vượt ngân sách: ",
-          leftBudget: "Còn lại: ",
-          cardBalanceTitle: "Bấm để điều chỉnh số dư thực tế",
-          setBudgetBtn: "➕ Đặt ngân sách",
-          catBudgetsHeader: "Hạn mức theo danh mục",
-          budgetModalTitle: "Thiết lập ngân sách tháng",
-          budgetModalSub: "Phân bổ hạn mức chi tiêu tổng và theo danh mục",
-          totalBudgetLbl: "Tổng ngân sách tháng (¥)",
-          syncSumBtn: "Lấy tổng danh mục",
-          sumFromCats: "Tổng từ các danh mục:",
-          stdCatsTitle: "Hạn mức danh mục mặc định (¥):",
-          customCatsTitle: "Danh mục tự đặt tên:",
-          newCatPh: "Tên danh mục mới (vd: Giải trí, Gym...)",
-          addCatBtn: "+ Thêm danh mục",
-          cancelBtn: "Hủy",
-          saveBudgetBtn: "Lưu ngân sách",
-          undoCalc: "↩ Hoàn tác",
-          applyCalcBtn: "Áp dụng",
-          calcOperandPh: "Số cần tính...",
-          cats: {
-            "Ăn uống": "Ăn uống",
-            "Mua sắm": "Mua sắm",
-            "Đi lại": "Đi lại",
-            "Nhà cửa & Hóa đơn": "Nhà cửa & Hóa đơn",
-            "Học tập / Công việc": "Học tập / Công việc",
-            "Lương": "Lương",
-            "Khác": "Khác"
-          }
-        },
-        en: {
-          loginDesc: "Sign in with Google to sync your personal expense data.",
-          loginBtn: "Sign in with Google",
-          appReady: "System ready ✓",
-          appInit: "Initializing...",
-          connecting: "Connecting...",
-          synced: "Synced",
-          syncErr: "Sync error!",
-          keyTitle: "Configure Gemini API Key",
-          logout: "Logout",
-          displayMonth: "Display Month",
-          totalIncome: "Total Income",
-          totalExpense: "Total Expense",
-          netBalance: "Net Balance",
-          recordTx: "Record Transaction",
-          scanAi: "Scan Receipt (AI)",
-          scanning: "Analyzing...",
-          expenseBtn: "Expense (-)",
-          incomeBtn: "Income (+)",
-          amountLbl: "Amount (¥)",
-          amountPh: "e.g. 1200",
-          dateLbl: "Transaction Date",
-          catLbl: "Category",
-          noteLbl: "Note",
-          notePh: "e.g. Supermarket, Bento...",
-          saveTx: "Save Transaction",
-          savingTx: "Saving...",
-          txHistory: "Transaction History",
-          noTx: "No transactions this month.",
-          chartTitle: "Monthly Expense Ratio",
-          debtBook: "Debt Book (VND)",
-          debtSub: "Track separate debts in VND",
-          totalRemDebt: "Total Remaining Debt",
-          addNewDebt: "Add New Debt",
-          debtTitlePh: "Debt name (e.g. Bank loan)",
-          debtAmtPh: "Principal amount (VND)",
-          debtNotePh: "Note / Due date",
-          addDebtBtn: "+ Add Debt",
-          addingDebt: "Adding...",
-          noDebt: "No debts recorded yet.",
-          noNote: "No note",
-          origDebt: "Principal:",
-          paidDebt: "Paid:",
-          remDebt: "Left:",
-          doneDebt: "Paid off ✓",
-          payMoreBtn: "+ Pay part",
-          deleteBtn: "Delete",
-          monthlyBudget: "Monthly Budget",
-          ceiling: "Limit:",
-          noBudget: "No budget set",
-          noBudgetInit: "No limit set",
-          overBudget: "Over budget: ",
-          leftBudget: "Remaining: ",
-          cardBalanceTitle: "Click to adjust actual balance",
-          setBudgetBtn: "➕ Set Budget",
-          catBudgetsHeader: "Category Budgets",
-          budgetModalTitle: "Set Monthly Budget",
-          budgetModalSub: "Allocate overall and category budget limits",
-          totalBudgetLbl: "Total Monthly Budget (¥)",
-          syncSumBtn: "Use Category Sum",
-          sumFromCats: "Total from categories:",
-          stdCatsTitle: "Default Category Limits (¥):",
-          customCatsTitle: "Custom Categories:",
-          newCatPh: "New category name (e.g. Entertainment, Gym...)",
-          addCatBtn: "+ Add Category",
-          cancelBtn: "Cancel",
-          saveBudgetBtn: "Save Budget",
-          undoCalc: "↩ Undo",
-          applyCalcBtn: "Apply",
-          calcOperandPh: "Number...",
-          cats: {
-            "Ăn uống": "Food & Dining",
-            "Mua sắm": "Shopping",
-            "Đi lại": "Transportation",
-            "Nhà cửa & Hóa đơn": "Housing & Bills",
-            "Học tập / Công việc": "Study / Work",
-            "Lương": "Salary",
-            "Khác": "Others"
-          }
-        },
-        ja: {
-          loginDesc: "Googleアカウントでログインして収支データを同期します。",
-          loginBtn: "Googleでログイン",
-          appReady: "システム準備完了 ✓",
-          appInit: "初期化中...",
-          connecting: "接続中...",
-          synced: "同期済み",
-          syncErr: "同期エラー！",
-          keyTitle: "Gemini APIキー設定",
-          logout: "ログアウト",
-          displayMonth: "表示月",
-          totalIncome: "総収入",
-          totalExpense: "総支出",
-          netBalance: "残高",
-          recordTx: "取引を記録",
-          scanAi: "レシート読取 (AI)",
-          scanning: "解析中...",
-          expenseBtn: "支出 (-)",
-          incomeBtn: "収入 (+)",
-          amountLbl: "金額 (¥)",
-          amountPh: "例: 1200",
-          dateLbl: "取引日",
-          catLbl: "カテゴリー",
-          noteLbl: "メモ",
-          notePh: "例: 業務スーパー、弁当...",
-          saveTx: "取引を保存",
-          savingTx: "保存中...",
-          txHistory: "取引履歴",
-          noTx: "今月の取引はありません。",
-          chartTitle: "月間支出の割合",
-          debtBook: "借入金帳簿 (VND)",
-          debtSub: "VND単位で個別に借入を管理",
-          totalRemDebt: "残りの借入総額",
-          addNewDebt: "新しい借入を追加",
-          debtTitlePh: "借入名 (例: 銀行ローン)",
-          debtAmtPh: "元金 (VND)",
-          debtNotePh: "メモ / 返済期限",
-          addDebtBtn: "+ 借入を追加",
-          addingDebt: "追加中...",
-          noDebt: "借入の記録はありません。",
-          noNote: "メモなし",
-          origDebt: "元金:",
-          paidDebt: "返済済:",
-          remDebt: "残り:",
-          doneDebt: "完済 ✓",
-          payMoreBtn: "+ 一部返済",
-          deleteBtn: "削除",
-          monthlyBudget: "月間予算",
-          ceiling: "上限:",
-          noBudget: "予算未設定",
-          noBudgetInit: "上限未設定",
-          overBudget: "予算超過: ",
-          leftBudget: "残り: ",
-          cardBalanceTitle: "クリックして実際の残高を調整",
-          setBudgetBtn: "➕ 予算を設定",
-          catBudgetsHeader: "カテゴリー別予算",
-          budgetModalTitle: "月間予算の設定",
-          budgetModalSub: "全体およびカテゴリー別の予算上限を配分",
-          totalBudgetLbl: "月間総予算 (¥)",
-          syncSumBtn: "カテゴリー合計を反映",
-          sumFromCats: "カテゴリー合計:",
-          stdCatsTitle: "デフォルトカテゴリーの上限 (¥):",
-          customCatsTitle: "カスタムカテゴリー:",
-          newCatPh: "新しいカテゴリー名（例: 娯楽、ジム等）",
-          addCatBtn: "+ カテゴリー追加",
-          cancelBtn: "キャンセル",
-          saveBudgetBtn: "予算を保存",
-          undoCalc: "↩ 元に戻す",
-          applyCalcBtn: "適用",
-          calcOperandPh: "計算する数値...",
-          cats: {
-            "Ăn uống": "食費",
-            "Mua sắm": "買い物",
-            "Đi lại": "交通費",
-            "Nhà cửa & Hóa đơn": "住居・光熱費",
-            "Học tập / Công việc": "学習・仕事",
-            "Lương": "給与",
-            "Khác": "その他"
-          }
-        },
-        my: {
-          loginDesc: "သင့်အသုံးစရိတ်ဒေတာကို ချိတ်ဆက်ရန် Google အကောင့်ဖြင့် ဝင်ရောက်ပါ။",
-          loginBtn: "Google ဖြင့် ဝင်ရောက်ပါ",
-          appReady: "စနစ်အသင့်ဖြစ်ပါပြီ ✓",
-          appInit: "စတင်နေသည်...",
-          connecting: "ချိတ်ဆက်နေသည်...",
-          synced: "ချိတ်ဆက်ပြီး",
-          syncErr: "ချိတ်ဆက်မှု အမှား!",
-          keyTitle: "Gemini API Key သတ်မှတ်ရန်",
-          logout: "ထွက်ရန်",
-          displayMonth: "ပြသမည့်လ",
-          totalIncome: "စုစုပေါင်းဝင်ငွေ",
-          totalExpense: "စုစုပေါင်းထွက်ငွေ",
-          netBalance: "လက်ကျန်ငွေ",
-          recordTx: "စာရင်းမှတ်ရန်",
-          scanAi: "ဘောင်ချာဖတ်ရန် (AI)",
-          scanning: "စစ်ဆေးနေသည်...",
-          expenseBtn: "အသုံးစရိတ် (-)",
-          incomeBtn: "ဝင်ငွေ (+)",
-          amountLbl: "ပမာဏ (¥)",
-          amountPh: "ဥပမာ- 1200",
-          dateLbl: "နေ့စွဲ",
-          catLbl: "အမျိုးအစား",
-          noteLbl: "မှတ်ချက်",
-          notePh: "ဥပမာ- စူပါမားကတ်၊ ထမင်းဘူး...",
-          saveTx: "စာရင်းသိမ်းရန်",
-          savingTx: "သိမ်းနေသည်...",
-          txHistory: "စာရင်းမှတ်တမ်း",
-          noTx: "ဤလအတွက် စာရင်းမရှိပါ။",
-          chartTitle: "လစဉ် အသုံးစရိတ် အချိုးအစား",
-          debtBook: "အကြွေးစာအုပ် (VND)",
-          debtSub: "VND ဖြင့် အကြွေးစာရင်း သီးသန့်မှတ်ရန်",
-          totalRemDebt: "ကျန်ရှိသော အကြွေးစုစုပေါင်း",
-          addNewDebt: "အကြွေးအသစ်ထည့်ရန်",
-          debtTitlePh: "အကြွေးအမည် (ဥပမာ- ဘဏ်ချေးငွေ)",
-          debtAmtPh: "မူလအကြွေးပမာဏ (VND)",
-          debtNotePh: "မှတ်ချက် / ဆပ်ရမည့်ရက်",
-          addDebtBtn: "+ အကြွေးထည့်ရန်",
-          addingDebt: "ထည့်နေသည်...",
-          noDebt: "အကြွေးစာရင်း မရှိသေးပါ။",
-          noNote: "မှတ်ချက်မရှိပါ",
-          origDebt: "မူလ:",
-          paidDebt: "ဆပ်ပြီး:",
-          remDebt: "ကျန်ငွေ:",
-          doneDebt: "ဆပ်ပြီး ✓",
-          payMoreBtn: "+ ခွဲဆပ်ရန်",
-          deleteBtn: "ဖျက်ရန်",
-          monthlyBudget: "လစဉ်ဘတ်ဂျက်",
-          ceiling: "ကန့်သတ်ချက်:",
-          noBudget: "ဘတ်ဂျက် မသတ်မှတ်ရသေးပါ",
-          noBudgetInit: "ကန့်သတ်ချက် မရှိသေးပါ",
-          overBudget: "ဘတ်ဂျက်ကျော်လွန်ငွေ: ",
-          leftBudget: "လက်ကျန်: ",
-          cardBalanceTitle: "လက်ကျန်ငွေအမှန်ကို ချိန်ညှိရန် နှိပ်ပါ",
-          setBudgetBtn: "➕ ဘတ်ဂျက်သတ်မှတ်",
-          catBudgetsHeader: "အမျိုးအစားအလိုက် ဘတ်ဂျက်",
-          budgetModalTitle: "လစဉ်ဘတ်ဂျက် သတ်မှတ်ရန်",
-          budgetModalSub: "စုစုပေါင်းနှင့် အမျိုးအစားအလိုက် ဘတ်ဂျက်ခွဲဝေရန်",
-          totalBudgetLbl: "လစဉ် စုစုပေါင်းဘတ်ဂျက် (¥)",
-          syncSumBtn: "အမျိုးအစားစုစုပေါင်းကိုယူရန်",
-          sumFromCats: "အမျိုးအစားများမှ စုစုပေါင်း:",
-          stdCatsTitle: "မူလ အမျိုးအစားကန့်သတ်ချက် (¥):",
-          customCatsTitle: "စိတ်ကြိုက်အမျိုးအစားများ:",
-          newCatPh: "အမျိုးအစားအမည်အသစ် (ဥပမာ- အပန်းဖြေ၊ အားကစား...)",
-          addCatBtn: "+ အမျိုးအစားထည့်",
-          cancelBtn: "ပယ်ဖျက်",
-          saveBudgetBtn: "ဘတ်ဂျက်သိမ်းရန်",
-          undoCalc: "↩ ပြန်ပြင်",
-          applyCalcBtn: "အသုံးပြု",
-          calcOperandPh: "တွက်ချက်မည့်ဂဏန်း...",
-          cats: {
-            "Ăn uống": "အစားအသောက်",
-            "Mua sắm": "ဈေးဝယ်",
-            "Đi lại": "သွားလာရေး",
-            "Nhà cửa & Hóa đơn": "နေထိုင်မှုနှင့် မီတာခ",
-            "Học tập / Công việc": "ပညာရေး / အလုပ်",
-            "Lương": "လစာ",
-            "Khác": "အခြား"
-          }
-        }
-      };
-
-      let currentLang = localStorage.getItem("CASHIES_LANG") || "vi";
-      let observer = null;
-      const watchedIds = ["txList", "debtList", "syncBadge", "budgetStatus", "scanStatus", "btnSubmitTx", "btnSubmitDebt", "categoryBudgetList"];
-
-      function setText(el, text) {
+    // ==========================================
+    // 9. DỊCH GIAO DIỆN & ĐIỀU HƯỚNG ĐA NGÔN NGỮ
+    // ==========================================
+    function setText(el, text) {
         if (el && el.innerText !== text) el.innerText = text;
       }
       function setPlaceholder(el, text) {
@@ -2224,13 +2627,13 @@
           }
         }
 
-        const btnSetBudget = document.getElementById("btnSetBudget");
-        if (btnSetBudget) {
-          setText(btnSetBudget.previousElementSibling, t.ceiling);
+        if (budgetHeading) {
+          setText(budgetHeading, currentBudgetPeriod === "month" ? t.monthlyBudget : t.weeklyBudget);
         }
 
-        const monthlyBudgetHeading = document.getElementById("monthlyBudgetHeading");
-        if (monthlyBudgetHeading && t.monthlyBudget) setText(monthlyBudgetHeading, t.monthlyBudget);
+        if (btnBudgetPeriodMonth && t.monthPeriod) setText(btnBudgetPeriodMonth, t.monthPeriod);
+        if (btnBudgetPeriodWeek && t.weekPeriod) setText(btnBudgetPeriodWeek, t.weekPeriod);
+        if (lblTotalLimit && t.lblTotalLimit) setText(lblTotalLimit, t.lblTotalLimit);
 
         const btnOpenBudgetModal = document.getElementById("btnOpenBudgetModal");
         if (btnOpenBudgetModal && t.setBudgetBtn) {
@@ -2247,20 +2650,31 @@
         const budgetModalSub = document.getElementById("budgetModalSub");
         if (budgetModalSub && t.budgetModalSub) setText(budgetModalSub, t.budgetModalSub);
 
+        if (tabModalMonth && t.tabModalMonth) setText(tabModalMonth, t.tabModalMonth);
+        if (tabModalWeek && t.tabModalWeek) setText(tabModalWeek, t.tabModalWeek);
+
+        if (lblDivideFromMonthNote && t.divideFromMonthNote) setText(lblDivideFromMonthNote, t.divideFromMonthNote);
+        if (btnDivideFromMonth && t.divideFromMonthBtn) setText(btnDivideFromMonth, t.divideFromMonthBtn);
+
         const lblTotalMonthlyBudget = document.getElementById("lblTotalMonthlyBudget");
-        if (lblTotalMonthlyBudget && t.totalBudgetLbl) setText(lblTotalMonthlyBudget, t.totalBudgetLbl);
+        if (lblTotalMonthlyBudget && t.totalMonthlyBudgetLbl) setText(lblTotalMonthlyBudget, t.totalMonthlyBudgetLbl);
 
-        const btnSyncSumCategories = document.getElementById("btnSyncSumCategories");
-        if (btnSyncSumCategories && t.syncSumBtn) setText(btnSyncSumCategories, t.syncSumBtn);
+        if (lblTotalWeeklyBudget && t.totalWeeklyBudgetLbl) setText(lblTotalWeeklyBudget, t.totalWeeklyBudgetLbl);
 
-        const lblSumFromCats = document.getElementById("lblSumFromCats");
-        if (lblSumFromCats && t.sumFromCats) setText(lblSumFromCats, t.sumFromCats);
+        if (btnSyncSumCategoriesMonth && t.syncSumBtn) setText(btnSyncSumCategoriesMonth, t.syncSumBtn);
+        if (btnSyncSumCategoriesWeek && t.syncSumBtn) setText(btnSyncSumCategoriesWeek, t.syncSumBtn);
 
-        const lblStandardCatBudgets = document.getElementById("lblStandardCatBudgets");
-        if (lblStandardCatBudgets && t.stdCatsTitle) setText(lblStandardCatBudgets, t.stdCatsTitle);
+        document.querySelectorAll(".lblSumFromCatsText").forEach(function(el) {
+          setText(el, t.sumFromCats);
+        });
+        document.querySelectorAll(".lblStandardCatBudgetsText").forEach(function(el) {
+          setText(el, t.stdCatsTitle);
+        });
+        document.querySelectorAll(".lblCustomCatBudgetsText").forEach(function(el) {
+          setText(el, t.customCatsTitle);
+        });
 
-        const lblCustomCatBudgets = document.getElementById("lblCustomCatBudgets");
-        if (lblCustomCatBudgets && t.customCatsTitle) setText(lblCustomCatBudgets, t.customCatsTitle);
+        if (lblAddNewCatTitle && t.addNewCatTitle) setText(lblAddNewCatTitle, t.addNewCatTitle);
 
         const inputNewCatName = document.getElementById("inputNewCatName");
         if (inputNewCatName && t.newCatPh) setPlaceholder(inputNewCatName, t.newCatPh);
@@ -2272,7 +2686,9 @@
         if (btnCancelBudgetModal && t.cancelBtn) setText(btnCancelBudgetModal, t.cancelBtn);
 
         const btnSaveBudgetModal = document.getElementById("btnSaveBudgetModal");
-        if (btnSaveBudgetModal && t.saveBudgetBtn) setText(btnSaveBudgetModal, t.saveBudgetBtn);
+        if (btnSaveBudgetModal && t.saveBudgetBtn) {
+          setText(btnSaveBudgetModal, btnSaveBudgetModal.disabled ? (t.savingBudgetBtn || "Đang lưu...") : t.saveBudgetBtn);
+        }
 
         const btnUndoCalc = document.getElementById("btnUndoCalc");
         if (btnUndoCalc && t.undoCalc) setText(btnUndoCalc, t.undoCalc);
@@ -2299,120 +2715,6 @@
             setText(syncBadge, t.connecting);
           }
         }
-
-        const txListEl = document.getElementById("txList");
-        if (txListEl) {
-          const emptyMsg = txListEl.querySelector("p.text-center");
-          if (emptyMsg) {
-            setText(emptyMsg, t.noTx);
-          } else {
-            const items = txListEl.querySelectorAll("div.py-2\\.5 p.font-semibold");
-            items.forEach(p => {
-              if (p.firstChild && p.firstChild.nodeType === Node.TEXT_NODE) {
-                const rawCat = p.firstChild.nodeValue.trim();
-                let viKey = Object.keys(i18n.vi.cats).find(k => 
-                  k === rawCat || i18n.en.cats[k] === rawCat || i18n.ja.cats[k] === rawCat || i18n.my.cats[k] === rawCat
-                );
-                if (viKey && t.cats[viKey] && p.firstChild.nodeValue !== t.cats[viKey]) {
-                  p.firstChild.nodeValue = t.cats[viKey];
-                }
-              }
-            });
-          }
-        }
-
-        const debtListEl = document.getElementById("debtList");
-        if (debtListEl) {
-          const emptyMsg = debtListEl.querySelector("p.text-center");
-          if (emptyMsg) {
-            setText(emptyMsg, t.noDebt);
-          } else {
-            debtListEl.querySelectorAll(":scope > div").forEach(card => {
-              const subInfo = card.querySelector("div.flex > div:first-child > p:last-child");
-              if (subInfo) {
-                let txt = subInfo.innerText;
-                ["Không có ghi chú", "No note", "メモなし", "မှတ်ချက်မရှိပါ"].forEach(s => {
-                  txt = txt.replace(s, t.noNote);
-                });
-                ["Gốc:", "Principal:", "元金:", "မူလ:"].forEach(s => {
-                  txt = txt.replace(s, t.origDebt);
-                });
-                setText(subInfo, txt);
-              }
-              const statusP = card.querySelector("div.text-right > p");
-              if (statusP) {
-                if (statusP.innerText.includes("✓")) {
-                  setText(statusP, t.doneDebt);
-                } else {
-                  let sTxt = statusP.innerText;
-                  ["Còn:", "Left:", "残り:", "ကျန်ငွေ:"].forEach(s => {
-                    sTxt = sTxt.replace(s, t.remDebt);
-                  });
-                  setText(statusP, sTxt);
-                }
-              }
-              const paidSpan = card.querySelector("div.text-right > span");
-              if (paidSpan) {
-                let pTxt = paidSpan.innerText;
-                ["Đã trả:", "Paid:", "返済済:", "ဆပ်ပြီး:"].forEach(s => {
-                  pTxt = pTxt.replace(s, t.paidDebt);
-                });
-                setText(paidSpan, pTxt);
-              }
-              const btns = card.querySelectorAll("button");
-              btns.forEach(btn => {
-                const bTxt = btn.innerText.trim();
-                if (bTxt.startsWith("+")) setText(btn, t.payMoreBtn);
-                else setText(btn, t.deleteBtn);
-              });
-            });
-          }
-        }
-
-        const budgetStatus = document.getElementById("budgetStatus");
-        if (budgetStatus) {
-          let bTxt = budgetStatus.innerText;
-          if (bTxt.includes(":")) {
-            const amountPart = bTxt.split(":")[1].trim();
-            const progress = document.getElementById("budgetProgress");
-            if (progress && progress.className.includes("rose")) {
-              setText(budgetStatus, t.overBudget + amountPart);
-            } else {
-              setText(budgetStatus, t.leftBudget + amountPart);
-            }
-          } else {
-            setText(budgetStatus, t.noBudget);
-          }
-        }
-
-        if (typeof chartInstance !== "undefined" && chartInstance && chartInstance.data && chartInstance.data.labels) {
-          let updated = false;
-          chartInstance.data.labels = chartInstance.data.labels.map(lbl => {
-            let viKey = Object.keys(i18n.vi.cats).find(k => 
-              k === lbl || i18n.en.cats[k] === lbl || i18n.ja.cats[k] === lbl || i18n.my.cats[k] === lbl
-            );
-            if (viKey && t.cats[viKey] && lbl !== t.cats[viKey]) {
-              updated = true;
-              return t.cats[viKey];
-            }
-            return lbl;
-          });
-          if (updated) chartInstance.update();
-        }
-
-        const catBudgetEl = document.getElementById("categoryBudgetList");
-        if (catBudgetEl) {
-          const catSpans = catBudgetEl.querySelectorAll("div.flex > span.font-semibold");
-          catSpans.forEach(span => {
-            const rawCat = span.innerText.trim();
-            let viKey = Object.keys(i18n.vi.cats).find(k => 
-              k === rawCat || i18n.en.cats[k] === rawCat || i18n.ja.cats[k] === rawCat || i18n.my.cats[k] === rawCat
-            );
-            if (viKey && t.cats[viKey] && span.innerText !== t.cats[viKey]) {
-              span.innerText = t.cats[viKey];
-            }
-          });
-        }
       }
 
       function runAllTranslations() {
@@ -2436,6 +2738,20 @@
         if (s2 && s2.value !== lang) s2.value = lang;
 
         runAllTranslations();
+        updateBudgetPeriodUI();
+        updateCategoryDropdown();
+        renderAll();
+        renderDebts();
+
+        if (budgetModal && !budgetModal.classList.contains("hidden")) {
+          renderModalStandardCatInputs("month");
+          renderModalCustomCatInputs("month");
+          renderModalStandardCatInputs("week");
+          renderModalCustomCatInputs("week");
+          updateModalCalculatedSum("month");
+          updateModalCalculatedSum("week");
+        }
+
         if (typeof detectAndApplyDeviceLayout === "function") {
           detectAndApplyDeviceLayout();
         }
@@ -2454,7 +2770,6 @@
       } else {
         initI18n();
       }
-    })();
   </script>
 </body>
 </html>
