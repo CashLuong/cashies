@@ -163,12 +163,47 @@
 
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Số tiền (¥)</label>
-                <input type="number" id="txAmount" placeholder="vd: 1200" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[11px] font-semibold text-slate-400">Số tiền (¥)</label>
+                  <span id="calcPreview" class="text-[10px] text-emerald-600 font-semibold hidden truncate max-w-[120px]"></span>
+                </div>
+                <div class="relative">
+                  <input type="text" inputmode="decimal" id="txAmount" placeholder="vd: 1200 hoặc 3000/2" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 pr-8 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400">
+                  <button type="button" id="btnToggleCalc" title="Mở phép tính (+ - × ÷)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 text-xs p-1 rounded-md transition">
+                    🧮
+                  </button>
+                </div>
+                
+                <!-- Phép tính nhanh (Quick Math Actions) -->
+                <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                  <button type="button" class="btn-quick-div text-[10px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-semibold px-2 py-0.5 rounded-md transition" data-divisor="2" title="Chia đôi số tiền">÷ 2</button>
+                  <button type="button" class="btn-quick-div text-[10px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-semibold px-2 py-0.5 rounded-md transition" data-divisor="3" title="Chia 3">÷ 3</button>
+                  <button type="button" class="btn-quick-div text-[10px] bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-semibold px-2 py-0.5 rounded-md transition" data-divisor="4" title="Chia 4">÷ 4</button>
+                  <button type="button" id="btnUndoCalc" class="hidden text-[10px] bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-md transition" title="Khôi phục số tiền ban đầu">↩ Hoàn tác</button>
+                </div>
               </div>
               <div>
                 <label class="block text-[11px] font-semibold text-slate-400 mb-1">Ngày giao dịch</label>
                 <input type="date" id="txDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400">
+              </div>
+            </div>
+
+            <!-- Khung phép tính nâng cao (Inline Calculator Bar) -->
+            <div id="calcPanel" class="hidden bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Phép tính:</span>
+                <div class="flex items-center gap-1">
+                  <button type="button" class="btn-calc-op w-6 h-6 rounded bg-white text-slate-700 font-bold hover:bg-indigo-50 border border-slate-200 text-xs transition" data-op="+">+</button>
+                  <button type="button" class="btn-calc-op w-6 h-6 rounded bg-white text-slate-700 font-bold hover:bg-indigo-50 border border-slate-200 text-xs transition" data-op="-">−</button>
+                  <button type="button" class="btn-calc-op w-6 h-6 rounded bg-white text-slate-700 font-bold hover:bg-indigo-50 border border-slate-200 text-xs transition" data-op="*">×</button>
+                  <button type="button" class="btn-calc-op w-6 h-6 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700 text-xs transition" data-op="/">÷</button>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span id="calcCurrentOpDisplay" class="font-bold text-slate-700 w-4 text-center text-sm">÷</span>
+                <input type="number" id="calcOperandInput" placeholder="Số cần tính..." class="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400">
+                <button type="button" id="btnApplyCalc" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-2.5 py-1 rounded-lg text-xs transition">Áp dụng</button>
+                <button type="button" id="btnCloseCalc" class="text-slate-400 hover:text-slate-600 px-1 py-1 text-xs">✕</button>
               </div>
             </div>
 
@@ -197,23 +232,43 @@
           </form>
         </section>
 
-        <!-- 7. TỔNG NGÂN SÁCH THÁNG -->
-        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2.5">
+        <!-- 7. TỔNG NGÂN SÁCH THÁNG & CHIA THEO DANH MỤC -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-semibold text-slate-700">Ngân sách tháng</span>
-            <div class="flex items-center gap-1">
-              <span class="text-slate-400">Trần:</span>
-              <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline">
-                <span id="budgetDisplay">¥0</span>
+            <span class="font-bold text-sm text-slate-800" id="monthlyBudgetHeading">Ngân sách tháng</span>
+            <div class="flex items-center gap-2">
+              <button type="button" id="btnOpenBudgetModal" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition shadow-2xs">
+                <span>➕ Đặt ngân sách</span>
               </button>
             </div>
           </div>
-          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-            <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+
+          <!-- Tiến độ tổng ngân sách -->
+          <div class="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-500 font-medium">Tổng hạn mức:</span>
+              <button id="btnSetBudget" class="font-bold text-indigo-600 hover:underline" title="Bấm để chỉnh sửa ngân sách">
+                <span id="budgetDisplay">¥0</span>
+              </button>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+              <div id="budgetProgress" class="h-2.5 rounded-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-[11px] text-slate-400">
+              <span id="budgetStatus">Chưa đặt hạn mức</span>
+              <span id="budgetPercent">0%</span>
+            </div>
           </div>
-          <div class="flex justify-between text-[11px] text-slate-400">
-            <span id="budgetStatus">Chưa đặt hạn mức</span>
-            <span id="budgetPercent">0%</span>
+
+          <!-- Phân chia ngân sách theo danh mục -->
+          <div class="space-y-2 pt-1 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700" id="catBudgetsHeader">Hạn mức theo danh mục</span>
+              <span id="catBudgetsActiveCount" class="text-[10px] text-slate-400 font-medium"></span>
+            </div>
+            <div id="categoryBudgetList" class="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+              <!-- Render danh sách ngân sách từng danh mục qua JavaScript -->
+            </div>
           </div>
         </section>
 
@@ -273,6 +328,71 @@
 
   </div>
 
+  <!-- MODAL THIẾT LẬP NGÂN SÁCH THÁNG & CHIA THEO DANH MỤC -->
+  <div id="budgetModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
+        <div>
+          <h3 class="font-bold text-base text-slate-800" id="budgetModalTitle">Thiết lập ngân sách tháng</h3>
+          <p class="text-xs text-slate-400" id="budgetModalSub">Phân bổ hạn mức chi tiêu tổng và theo danh mục</p>
+        </div>
+        <button type="button" id="btnCloseBudgetModal" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition text-sm">✕</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+        <!-- Tổng ngân sách tháng -->
+        <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="font-bold text-slate-700 text-xs" id="lblTotalMonthlyBudget">Tổng ngân sách tháng (¥)</label>
+            <button type="button" id="btnSyncSumCategories" class="text-[11px] text-indigo-600 hover:underline font-semibold" title="Tự động tính bằng tổng các danh mục bên dưới">
+              Lấy tổng danh mục
+            </button>
+          </div>
+          <input type="number" id="inputTotalBudget" placeholder="vd: 150000" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span id="lblSumFromCats">Tổng từ các danh mục:</span>
+            <span id="calculatedSumCatBudgets" class="font-bold text-indigo-600">¥0</span>
+          </div>
+        </div>
+
+        <!-- Hạn mức danh mục mặc định -->
+        <div class="space-y-2">
+          <p class="font-bold text-slate-700 text-xs" id="lblStandardCatBudgets">Hạn mức danh mục mặc định (¥):</p>
+          <div id="standardCatBudgetInputs" class="space-y-2"></div>
+        </div>
+
+        <!-- Danh mục tự đặt tên -->
+        <div class="space-y-2 pt-2 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <p class="font-bold text-slate-700 text-xs" id="lblCustomCatBudgets">Danh mục tự đặt tên:</p>
+          </div>
+          
+          <div id="customCatBudgetInputs" class="space-y-2"></div>
+
+          <!-- Form thêm danh mục tự đặt -->
+          <div class="flex items-center gap-2 pt-1">
+            <input type="text" id="inputNewCatName" placeholder="Tên danh mục mới (vd: Giải trí, Gym...)" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400">
+            <button type="button" id="btnAddCustomCat" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded-xl text-xs transition shrink-0">
+              + Thêm danh mục
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end gap-2.5 p-4 border-t border-slate-100 bg-slate-50">
+        <button type="button" id="btnCancelBudgetModal" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-white text-xs font-medium transition">
+          Hủy
+        </button>
+        <button type="button" id="btnSaveBudgetModal" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition">
+          Lưu ngân sách
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ==========================================
     // 1. CẤU HÌNH FIREBASE
@@ -303,10 +423,22 @@
     let debts = [];
     let currentType = "expense";
     let monthlyBudget = 0;
+    let categoryBudgets = {};
+    let customCategories = [];
     let chartInstance = null;
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
     let currentMonthNet = 0;
+    let lastOriginalAmount = null;
+    let activeCalcOp = "/";
+
+    const DEFAULT_BUDGET_CATS = [
+      { key: "Ăn uống", icon: "🍜" },
+      { key: "Mua sắm", icon: "🛍️" },
+      { key: "Đi lại", icon: "🚗" },
+      { key: "Nhà cửa & Hóa đơn", icon: "🏠" },
+      { key: "Học tập / Công việc", icon: "💼" }
+    ];
 
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
@@ -325,9 +457,25 @@
 
     const budgetDisplay = document.getElementById("budgetDisplay");
     const btnSetBudget = document.getElementById("btnSetBudget");
+    const btnOpenBudgetModal = document.getElementById("btnOpenBudgetModal");
     const budgetProgress = document.getElementById("budgetProgress");
     const budgetStatus = document.getElementById("budgetStatus");
     const budgetPercent = document.getElementById("budgetPercent");
+    const categoryBudgetList = document.getElementById("categoryBudgetList");
+    const catBudgetsActiveCount = document.getElementById("catBudgetsActiveCount");
+
+    // Modal Ngân sách & Danh mục
+    const budgetModal = document.getElementById("budgetModal");
+    const btnCloseBudgetModal = document.getElementById("btnCloseBudgetModal");
+    const btnCancelBudgetModal = document.getElementById("btnCancelBudgetModal");
+    const btnSaveBudgetModal = document.getElementById("btnSaveBudgetModal");
+    const inputTotalBudget = document.getElementById("inputTotalBudget");
+    const btnSyncSumCategories = document.getElementById("btnSyncSumCategories");
+    const calculatedSumCatBudgets = document.getElementById("calculatedSumCatBudgets");
+    const standardCatBudgetInputs = document.getElementById("standardCatBudgetInputs");
+    const customCatBudgetInputs = document.getElementById("customCatBudgetInputs");
+    const inputNewCatName = document.getElementById("inputNewCatName");
+    const btnAddCustomCat = document.getElementById("btnAddCustomCat");
 
     const btnTypeExpense = document.getElementById("btnTypeExpense");
     const btnTypeIncome = document.getElementById("btnTypeIncome");
@@ -338,6 +486,16 @@
     const txNote = document.getElementById("txNote");
     const txList = document.getElementById("txList");
     const btnSubmitTx = document.getElementById("btnSubmitTx");
+
+    // Công cụ tính toán số tiền giao dịch
+    const calcPreview = document.getElementById("calcPreview");
+    const btnToggleCalc = document.getElementById("btnToggleCalc");
+    const calcPanel = document.getElementById("calcPanel");
+    const calcCurrentOpDisplay = document.getElementById("calcCurrentOpDisplay");
+    const calcOperandInput = document.getElementById("calcOperandInput");
+    const btnApplyCalc = document.getElementById("btnApplyCalc");
+    const btnCloseCalc = document.getElementById("btnCloseCalc");
+    const btnUndoCalc = document.getElementById("btnUndoCalc");
 
     const receiptInput = document.getElementById("receiptInput");
     const scanStatus = document.getElementById("scanStatus");
@@ -505,24 +663,229 @@
 
     async function loadUserSettings() {
       if (!currentUser) return;
-      const doc = await db.collection("users").doc(currentUser.uid).get();
-      if (doc.exists && doc.data().monthlyBudget) {
-        monthlyBudget = doc.data().monthlyBudget;
+      try {
+        const doc = await db.collection("users").doc(currentUser.uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          monthlyBudget = (typeof data.monthlyBudget === "number") ? data.monthlyBudget : 0;
+          categoryBudgets = (data.categoryBudgets && typeof data.categoryBudgets === "object") ? data.categoryBudgets : {};
+          customCategories = Array.isArray(data.customCategories) ? data.customCategories : [];
+        }
+      } catch (err) {
+        console.warn("Lỗi loadUserSettings:", err);
       }
-      renderBudget(0);
+      updateCategoryDropdown();
+      renderAll();
     }
 
-    btnSetBudget.addEventListener("click", async function() {
-      const defaultVal = monthlyBudget ? String(monthlyBudget) : "";
-      const input = prompt("Nhập hạn mức chi tiêu tháng (¥):", defaultVal);
-      if (input !== null) {
-        const parsed = parseInt(input, 10);
-        const val = isNaN(parsed) ? 0 : parsed;
-        monthlyBudget = val;
-        await db.collection("users").doc(currentUser.uid).set({ monthlyBudget: val }, { merge: true });
-        renderAll();
+    function updateCategoryDropdown() {
+      if (!txCategory) return;
+      const currentVal = txCategory.value;
+      const standardList = [
+        "Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc"
+      ];
+      let optionsHtml = standardList.map(function(c) {
+        return '<option value="' + c + '">' + c + '</option>';
+      }).join("");
+
+      if (customCategories && customCategories.length > 0) {
+        optionsHtml += customCategories.map(function(c) {
+          return '<option value="' + c + '">🏷️ ' + c + '</option>';
+        }).join("");
       }
-    });
+
+      optionsHtml += '<option value="Lương">Lương</option>';
+      optionsHtml += '<option value="Khác">Khác</option>';
+      txCategory.innerHTML = optionsHtml;
+
+      if (currentVal && Array.from(txCategory.options).some(function(o) { return o.value === currentVal; })) {
+        txCategory.value = currentVal;
+      }
+    }
+
+    // ==========================================
+    // 4.1 QUẢN LÝ NGÂN SÁCH THÁNG & DANH MỤC
+    // ==========================================
+    let tempCustomCats = [];
+
+    function openBudgetModal() {
+      if (!currentUser) {
+        alert("Vui lòng đăng nhập để thiết lập ngân sách!");
+        return;
+      }
+      tempCustomCats = Array.isArray(customCategories) ? [...customCategories] : [];
+      inputTotalBudget.value = monthlyBudget > 0 ? monthlyBudget : "";
+      renderModalStandardCatInputs();
+      renderModalCustomCatInputs();
+      updateModalCalculatedSum();
+      budgetModal.classList.remove("hidden");
+    }
+
+    function closeBudgetModal() {
+      budgetModal.classList.add("hidden");
+      inputNewCatName.value = "";
+    }
+
+    function renderModalStandardCatInputs() {
+      if (!standardCatBudgetInputs) return;
+      standardCatBudgetInputs.innerHTML = DEFAULT_BUDGET_CATS.map(function(cat) {
+        const val = (categoryBudgets && categoryBudgets[cat.key]) ? categoryBudgets[cat.key] : "";
+        return '<div class="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">' +
+          '<div class="flex items-center gap-2 min-w-[130px] sm:min-w-[150px]">' +
+            '<span class="text-base">' + cat.icon + '</span>' +
+            '<span class="font-semibold text-xs text-slate-700">' + cat.key + '</span>' +
+          '</div>' +
+          '<div class="flex items-center gap-1.5 flex-1 max-w-[160px]">' +
+            '<span class="text-xs text-slate-400 font-medium">¥</span>' +
+            '<input type="number" min="0" data-cat-key="' + cat.key + '" value="' + val + '" placeholder="0" ' +
+              'class="modal-cat-input w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-semibold text-right focus:outline-none focus:ring-1 focus:ring-indigo-400">' +
+          '</div>' +
+        '</div>';
+      }).join("");
+
+      attachModalInputListeners();
+    }
+
+    function renderModalCustomCatInputs() {
+      if (!customCatBudgetInputs) return;
+      if (tempCustomCats.length === 0) {
+        customCatBudgetInputs.innerHTML = '<p class="text-[11px] text-slate-400 italic py-1">Chưa có danh mục tự đặt nào. Nhập tên bên dưới để thêm.</p>';
+        return;
+      }
+
+      customCatBudgetInputs.innerHTML = tempCustomCats.map(function(catName, idx) {
+        const val = (categoryBudgets && categoryBudgets[catName]) ? categoryBudgets[catName] : "";
+        return '<div class="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">' +
+          '<div class="flex items-center gap-1.5 flex-1 truncate">' +
+            '<span class="text-sm">🏷️</span>' +
+            '<span class="font-semibold text-xs text-slate-700 truncate" title="' + catName + '">' + catName + '</span>' +
+          '</div>' +
+          '<div class="flex items-center gap-1.5 shrink-0 w-36 sm:w-40">' +
+            '<span class="text-xs text-slate-400 font-medium">¥</span>' +
+            '<input type="number" min="0" data-cat-key="' + catName + '" value="' + val + '" placeholder="0" ' +
+              'class="modal-cat-input w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-right focus:outline-none focus:ring-1 focus:ring-indigo-400">' +
+            '<button type="button" onclick="removeTempCustomCat(' + idx + ')" class="text-slate-400 hover:text-rose-500 p-1 text-xs transition" title="Xóa danh mục này">🗑️</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+
+      attachModalInputListeners();
+    }
+
+    window.removeTempCustomCat = function(idx) {
+      if (idx >= 0 && idx < tempCustomCats.length) {
+        tempCustomCats.splice(idx, 1);
+        renderModalCustomCatInputs();
+        updateModalCalculatedSum();
+      }
+    };
+
+    function attachModalInputListeners() {
+      const inputs = budgetModal.querySelectorAll(".modal-cat-input");
+      inputs.forEach(function(inp) {
+        inp.removeEventListener("input", updateModalCalculatedSum);
+        inp.addEventListener("input", updateModalCalculatedSum);
+      });
+    }
+
+    function getSumFromModalCatInputs() {
+      const inputs = budgetModal.querySelectorAll(".modal-cat-input");
+      let sum = 0;
+      inputs.forEach(function(inp) {
+        const v = parseInt(inp.value, 10);
+        if (!isNaN(v) && v > 0) {
+          sum += v;
+        }
+      });
+      return sum;
+    }
+
+    function updateModalCalculatedSum() {
+      const sum = getSumFromModalCatInputs();
+      if (calculatedSumCatBudgets) {
+        calculatedSumCatBudgets.innerText = formatJPY(sum);
+      }
+    }
+
+    if (btnSyncSumCategories) {
+      btnSyncSumCategories.addEventListener("click", function() {
+        const sum = getSumFromModalCatInputs();
+        inputTotalBudget.value = sum > 0 ? sum : "";
+      });
+    }
+
+    if (btnAddCustomCat) {
+      btnAddCustomCat.addEventListener("click", function() {
+        const name = inputNewCatName.value.trim();
+        if (!name) {
+          alert("Vui lòng nhập tên danh mục!");
+          inputNewCatName.focus();
+          return;
+        }
+        const isDefault = DEFAULT_BUDGET_CATS.some(function(c) { return c.key.toLowerCase() === name.toLowerCase(); });
+        const isSpecial = ["lương", "khác"].includes(name.toLowerCase());
+        const isExisting = tempCustomCats.some(function(c) { return c.toLowerCase() === name.toLowerCase(); });
+
+        if (isDefault || isSpecial || isExisting) {
+          alert("Danh mục '" + name + "' đã tồn tại!");
+          return;
+        }
+
+        tempCustomCats.push(name);
+        inputNewCatName.value = "";
+        renderModalCustomCatInputs();
+        updateModalCalculatedSum();
+      });
+    }
+
+    if (btnSaveBudgetModal) {
+      btnSaveBudgetModal.addEventListener("click", async function() {
+        if (!currentUser) return;
+        btnSaveBudgetModal.disabled = true;
+        btnSaveBudgetModal.innerText = "Đang lưu...";
+
+        const inputs = budgetModal.querySelectorAll(".modal-cat-input");
+        const newCategoryBudgets = {};
+        inputs.forEach(function(inp) {
+          const key = inp.dataset.catKey;
+          const v = parseInt(inp.value, 10);
+          if (key && !isNaN(v) && v > 0) {
+            newCategoryBudgets[key] = v;
+          }
+        });
+
+        let parsedTotal = parseInt(inputTotalBudget.value, 10);
+        if (isNaN(parsedTotal) || parsedTotal <= 0) {
+          parsedTotal = getSumFromModalCatInputs();
+        }
+
+        try {
+          await db.collection("users").doc(currentUser.uid).set({
+            monthlyBudget: parsedTotal,
+            categoryBudgets: newCategoryBudgets,
+            customCategories: tempCustomCats
+          }, { merge: true });
+
+          monthlyBudget = parsedTotal;
+          categoryBudgets = newCategoryBudgets;
+          customCategories = [...tempCustomCats];
+
+          updateCategoryDropdown();
+          closeBudgetModal();
+          renderAll();
+        } catch (err) {
+          alert("Lỗi khi lưu ngân sách: " + err.message);
+        } finally {
+          btnSaveBudgetModal.disabled = false;
+          btnSaveBudgetModal.innerText = "Lưu ngân sách";
+        }
+      });
+    }
+
+    if (btnOpenBudgetModal) btnOpenBudgetModal.addEventListener("click", openBudgetModal);
+    if (btnSetBudget) btnSetBudget.addEventListener("click", openBudgetModal);
+    if (btnCloseBudgetModal) btnCloseBudgetModal.addEventListener("click", closeBudgetModal);
+    if (btnCancelBudgetModal) btnCancelBudgetModal.addEventListener("click", closeBudgetModal);
 
     cardBalance.addEventListener("click", async function() {
       if (!currentUser) return;
@@ -582,13 +945,190 @@
       }
     });
 
+    // ==========================================
+    // 5.1 CÔNG CỤ TÍNH TOÁN SỐ TIỀN GIAO DỊCH
+    // ==========================================
+    function evaluateMathExpr(str) {
+      if (!str) return NaN;
+      let clean = String(str)
+        .replace(/÷/g, "/")
+        .replace(/[×xX]/g, "*")
+        .replace(/[,\s]/g, "")
+        .trim();
+      
+      // Chỉ cho phép các ký tự số học an toàn: số, dấu +, -, *, /, ., và ngoặc đơn
+      if (!/^[\d+\-*/.()]+$/.test(clean)) return NaN;
+      
+      try {
+        const fn = new Function("return (" + clean + ")");
+        const val = fn();
+        if (typeof val === "number" && !isNaN(val) && isFinite(val)) {
+          return Math.round(val);
+        }
+      } catch (e) {
+        return NaN;
+      }
+      return NaN;
+    }
+
+    function showCalcFeedback(text) {
+      if (!calcPreview) return;
+      calcPreview.innerText = "✓ " + text;
+      calcPreview.classList.remove("hidden");
+    }
+
+    function resetCalcTools() {
+      lastOriginalAmount = null;
+      if (btnUndoCalc) btnUndoCalc.classList.add("hidden");
+      if (calcPreview) {
+        calcPreview.innerText = "";
+        calcPreview.classList.add("hidden");
+      }
+      if (calcPanel) calcPanel.classList.add("hidden");
+      if (calcOperandInput) calcOperandInput.value = "";
+    }
+
+    // Các nút chia nhanh: ÷ 2, ÷ 3, ÷ 4
+    document.querySelectorAll(".btn-quick-div").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        const divisor = parseInt(this.dataset.divisor, 10);
+        if (isNaN(divisor) || divisor <= 0) return;
+
+        const currentVal = evaluateMathExpr(txAmount.value);
+        if (isNaN(currentVal) || currentVal <= 0) {
+          alert("Vui lòng nhập hoặc quét số tiền trước khi thực hiện phép tính!");
+          txAmount.focus();
+          return;
+        }
+
+        lastOriginalAmount = currentVal;
+        const result = Math.round(currentVal / divisor);
+        txAmount.value = result;
+        showCalcFeedback(formatJPY(currentVal) + " ÷ " + divisor + " = " + formatJPY(result));
+        if (btnUndoCalc) btnUndoCalc.classList.remove("hidden");
+      });
+    });
+
+    // Nút Hoàn tác số tiền ban đầu
+    if (btnUndoCalc) {
+      btnUndoCalc.addEventListener("click", function() {
+        if (lastOriginalAmount !== null) {
+          txAmount.value = lastOriginalAmount;
+          resetCalcTools();
+        }
+      });
+    }
+
+    // Bật / tắt panel phép tính chi tiết
+    if (btnToggleCalc) {
+      btnToggleCalc.addEventListener("click", function() {
+        if (!calcPanel) return;
+        calcPanel.classList.toggle("hidden");
+        if (!calcPanel.classList.contains("hidden") && calcOperandInput) {
+          calcOperandInput.focus();
+        }
+      });
+    }
+
+    if (btnCloseCalc) {
+      btnCloseCalc.addEventListener("click", function() {
+        if (calcPanel) calcPanel.classList.add("hidden");
+      });
+    }
+
+    // Chọn toán tử (+, -, ×, ÷) trong panel
+    document.querySelectorAll(".btn-calc-op").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        activeCalcOp = this.dataset.op;
+        document.querySelectorAll(".btn-calc-op").forEach(function(b) {
+          b.className = "btn-calc-op w-6 h-6 rounded bg-white text-slate-700 font-bold hover:bg-indigo-50 border border-slate-200 text-xs transition";
+        });
+        this.className = "btn-calc-op w-6 h-6 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700 text-xs transition";
+
+        const displayMap = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+        if (calcCurrentOpDisplay) {
+          calcCurrentOpDisplay.innerText = displayMap[activeCalcOp] || activeCalcOp;
+        }
+        if (calcOperandInput) calcOperandInput.focus();
+      });
+    });
+
+    // Áp dụng phép tính từ panel
+    if (btnApplyCalc) {
+      btnApplyCalc.addEventListener("click", function() {
+        const currentVal = evaluateMathExpr(txAmount.value);
+        if (isNaN(currentVal) || currentVal <= 0) {
+          alert("Vui lòng nhập số tiền hợp lệ trước!");
+          txAmount.focus();
+          return;
+        }
+
+        const operand = parseFloat(calcOperandInput.value);
+        if (isNaN(operand)) {
+          alert("Vui lòng nhập số cần tính!");
+          calcOperandInput.focus();
+          return;
+        }
+
+        if (activeCalcOp === "/" && operand === 0) {
+          alert("Không thể chia cho số 0!");
+          return;
+        }
+
+        lastOriginalAmount = currentVal;
+        let result = currentVal;
+        let opSymbol = "÷";
+
+        if (activeCalcOp === "+") {
+          result = currentVal + operand;
+          opSymbol = "+";
+        } else if (activeCalcOp === "-") {
+          result = currentVal - operand;
+          opSymbol = "−";
+        } else if (activeCalcOp === "*") {
+          result = currentVal * operand;
+          opSymbol = "×";
+        } else if (activeCalcOp === "/") {
+          result = currentVal / operand;
+          opSymbol = "÷";
+        }
+
+        result = Math.round(result);
+        if (result < 0) result = 0;
+
+        txAmount.value = result;
+        showCalcFeedback(formatJPY(currentVal) + " " + opSymbol + " " + operand + " = " + formatJPY(result));
+        if (calcPanel) calcPanel.classList.add("hidden");
+        if (calcOperandInput) calcOperandInput.value = "";
+        if (btnUndoCalc) btnUndoCalc.classList.remove("hidden");
+      });
+    }
+
+    // Tự động tính nhẩm khi người dùng tự gõ biểu thức vào ô Số tiền (ví dụ: gõ 3000/2 rồi bấm ra ngoài)
+    if (txAmount) {
+      txAmount.addEventListener("blur", function() {
+        const val = this.value.trim();
+        if (/[+\-*/÷×]/.test(val)) {
+          const evaluated = evaluateMathExpr(val);
+          if (!isNaN(evaluated) && evaluated >= 0) {
+            this.value = evaluated;
+            showCalcFeedback(val + " = " + formatJPY(evaluated));
+          }
+        }
+      });
+    }
+
     txForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       if (!currentUser) return;
       if (isSubmittingTx) return;
 
-      const rawAmount = parseInt(txAmount.value, 10);
-      if (isNaN(rawAmount) || rawAmount === 0) return;
+      const rawAmount = evaluateMathExpr(txAmount.value);
+      if (isNaN(rawAmount) || rawAmount === 0) {
+        alert("Vui lòng nhập số tiền hợp lệ!");
+        txAmount.focus();
+        return;
+      }
 
       isSubmittingTx = true;
       btnSubmitTx.disabled = true;
@@ -609,6 +1149,7 @@
         await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
         txAmount.value = "";
         txNote.value = "";
+        resetCalcTools();
         
         const txMonth = chosenDate.slice(0, 7);
         if (filterMonth.value !== txMonth) {
@@ -794,6 +1335,7 @@
       netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
 
       renderBudget(exp);
+      renderCategoryBudgets(catMap);
       renderChart(catMap);
       renderList(filtered);
     }
@@ -821,6 +1363,81 @@
       }
     }
 
+    function renderCategoryBudgets(catMap) {
+      if (!categoryBudgetList) return;
+
+      const allTrackedCats = [];
+
+      DEFAULT_BUDGET_CATS.forEach(function(c) {
+        const limit = (categoryBudgets && categoryBudgets[c.key]) ? categoryBudgets[c.key] : 0;
+        if (limit > 0) {
+          allTrackedCats.push({ key: c.key, icon: c.icon, limit: limit });
+        }
+      });
+
+      if (customCategories && customCategories.length > 0) {
+        customCategories.forEach(function(catName) {
+          const limit = (categoryBudgets && categoryBudgets[catName]) ? categoryBudgets[catName] : 0;
+          if (limit > 0) {
+            allTrackedCats.push({ key: catName, icon: "🏷️", limit: limit });
+          }
+        });
+      }
+
+      if (catBudgetsActiveCount) {
+        catBudgetsActiveCount.innerText = allTrackedCats.length > 0 ? "(" + allTrackedCats.length + " danh mục)" : "";
+      }
+
+      if (allTrackedCats.length === 0) {
+        categoryBudgetList.innerHTML = 
+          '<div class="text-center py-2.5 text-slate-400 text-xs bg-slate-50/70 rounded-xl p-3 border border-dashed border-slate-200">' +
+            '<p>Chưa phân chia hạn mức cho danh mục nào.</p>' +
+            '<button type="button" onclick="openBudgetModal()" class="text-indigo-600 hover:underline font-semibold mt-1 inline-block">' +
+              '+ Thiết lập hạn mức ngay' +
+            '</button>' +
+          '</div>';
+        return;
+      }
+
+      categoryBudgetList.innerHTML = allTrackedCats.map(function(item) {
+        const spent = catMap[item.key] ? catMap[item.key] : 0;
+        const limit = item.limit;
+        const percent = Math.min(Math.round((spent / limit) * 100), 100);
+        const isOver = spent > limit;
+        const isWarning = !isOver && (spent / limit >= 0.8);
+
+        let barClass = "bg-emerald-500";
+        let badgeClass = "bg-emerald-50 text-emerald-600";
+        let badgeText = percent + "%";
+
+        if (isOver) {
+          barClass = "bg-rose-500";
+          badgeClass = "bg-rose-50 text-rose-600 font-bold";
+          badgeText = "Vượt " + formatJPY(spent - limit);
+        } else if (isWarning) {
+          barClass = "bg-amber-500";
+          badgeClass = "bg-amber-50 text-amber-700 font-bold";
+          badgeText = percent + "% (Gần trần)";
+        }
+
+        return '<div class="space-y-1 bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">' +
+          '<div class="flex items-center justify-between text-xs">' +
+            '<div class="flex items-center gap-1.5 truncate">' +
+              '<span class="text-sm">' + item.icon + '</span>' +
+              '<span class="font-semibold text-slate-700 truncate">' + item.key + '</span>' +
+            '</div>' +
+            '<div class="flex items-center gap-2 text-right shrink-0">' +
+              '<span class="text-[11px] font-semibold text-slate-600">' + formatJPY(spent) + ' <span class="text-slate-400 font-normal">/ ' + formatJPY(limit) + '</span></span>' +
+              '<span class="text-[10px] px-1.5 py-0.5 rounded-full font-medium ' + badgeClass + '">' + badgeText + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">' +
+            '<div class="h-1.5 rounded-full ' + barClass + ' transition-all duration-300" style="width: ' + percent + '%"></div>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+    }
+
     function renderChart(catMap) {
       const labels = Object.keys(catMap);
       const data = Object.values(catMap);
@@ -841,7 +1458,11 @@
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#64748B"]
+            backgroundColor: [
+              "#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", 
+              "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#14B8A6", 
+              "#64748B", "#A855F7", "#3B82F6", "#E11D48"
+            ]
           }]
         },
         options: {
@@ -1083,14 +1704,17 @@
 
         if (parsed.amount) {
           const num = typeof parsed.amount === "number" ? parsed.amount : parseInt(String(parsed.amount).replace(/[^\d]/g, ""), 10);
-          if (!isNaN(num) && num > 0) txAmount.value = num;
+          if (!isNaN(num) && num > 0) {
+            txAmount.value = num;
+            resetCalcTools();
+          }
         }
         if (parsed.date) {
           txDate.value = parsed.date;
         }
         if (parsed.note) txNote.value = parsed.note;
         if (parsed.category) {
-          const validCats = ["Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc", "Lương", "Khác"];
+          const validCats = ["Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc", "Lương", "Khác", ...(customCategories || [])];
           if (validCats.indexOf(parsed.category) !== -1) {
             txCategory.value = parsed.category;
           } else {
@@ -1173,6 +1797,22 @@
           overBudget: "Vượt ngân sách: ",
           leftBudget: "Còn lại: ",
           cardBalanceTitle: "Bấm để điều chỉnh số dư thực tế",
+          setBudgetBtn: "➕ Đặt ngân sách",
+          catBudgetsHeader: "Hạn mức theo danh mục",
+          budgetModalTitle: "Thiết lập ngân sách tháng",
+          budgetModalSub: "Phân bổ hạn mức chi tiêu tổng và theo danh mục",
+          totalBudgetLbl: "Tổng ngân sách tháng (¥)",
+          syncSumBtn: "Lấy tổng danh mục",
+          sumFromCats: "Tổng từ các danh mục:",
+          stdCatsTitle: "Hạn mức danh mục mặc định (¥):",
+          customCatsTitle: "Danh mục tự đặt tên:",
+          newCatPh: "Tên danh mục mới (vd: Giải trí, Gym...)",
+          addCatBtn: "+ Thêm danh mục",
+          cancelBtn: "Hủy",
+          saveBudgetBtn: "Lưu ngân sách",
+          undoCalc: "↩ Hoàn tác",
+          applyCalcBtn: "Áp dụng",
+          calcOperandPh: "Số cần tính...",
           cats: {
             "Ăn uống": "Ăn uống",
             "Mua sắm": "Mua sắm",
@@ -1237,6 +1877,22 @@
           overBudget: "Over budget: ",
           leftBudget: "Remaining: ",
           cardBalanceTitle: "Click to adjust actual balance",
+          setBudgetBtn: "➕ Set Budget",
+          catBudgetsHeader: "Category Budgets",
+          budgetModalTitle: "Set Monthly Budget",
+          budgetModalSub: "Allocate overall and category budget limits",
+          totalBudgetLbl: "Total Monthly Budget (¥)",
+          syncSumBtn: "Use Category Sum",
+          sumFromCats: "Total from categories:",
+          stdCatsTitle: "Default Category Limits (¥):",
+          customCatsTitle: "Custom Categories:",
+          newCatPh: "New category name (e.g. Entertainment, Gym...)",
+          addCatBtn: "+ Add Category",
+          cancelBtn: "Cancel",
+          saveBudgetBtn: "Save Budget",
+          undoCalc: "↩ Undo",
+          applyCalcBtn: "Apply",
+          calcOperandPh: "Number...",
           cats: {
             "Ăn uống": "Food & Dining",
             "Mua sắm": "Shopping",
@@ -1301,6 +1957,22 @@
           overBudget: "予算超過: ",
           leftBudget: "残り: ",
           cardBalanceTitle: "クリックして実際の残高を調整",
+          setBudgetBtn: "➕ 予算を設定",
+          catBudgetsHeader: "カテゴリー別予算",
+          budgetModalTitle: "月間予算の設定",
+          budgetModalSub: "全体およびカテゴリー別の予算上限を配分",
+          totalBudgetLbl: "月間総予算 (¥)",
+          syncSumBtn: "カテゴリー合計を反映",
+          sumFromCats: "カテゴリー合計:",
+          stdCatsTitle: "デフォルトカテゴリーの上限 (¥):",
+          customCatsTitle: "カスタムカテゴリー:",
+          newCatPh: "新しいカテゴリー名（例: 娯楽、ジム等）",
+          addCatBtn: "+ カテゴリー追加",
+          cancelBtn: "キャンセル",
+          saveBudgetBtn: "予算を保存",
+          undoCalc: "↩ 元に戻す",
+          applyCalcBtn: "適用",
+          calcOperandPh: "計算する数値...",
           cats: {
             "Ăn uống": "食費",
             "Mua sắm": "買い物",
@@ -1365,6 +2037,22 @@
           overBudget: "ဘတ်ဂျက်ကျော်လွန်ငွေ: ",
           leftBudget: "လက်ကျန်: ",
           cardBalanceTitle: "လက်ကျန်ငွေအမှန်ကို ချိန်ညှိရန် နှိပ်ပါ",
+          setBudgetBtn: "➕ ဘတ်ဂျက်သတ်မှတ်",
+          catBudgetsHeader: "အမျိုးအစားအလိုက် ဘတ်ဂျက်",
+          budgetModalTitle: "လစဉ်ဘတ်ဂျက် သတ်မှတ်ရန်",
+          budgetModalSub: "စုစုပေါင်းနှင့် အမျိုးအစားအလိုက် ဘတ်ဂျက်ခွဲဝေရန်",
+          totalBudgetLbl: "လစဉ် စုစုပေါင်းဘတ်ဂျက် (¥)",
+          syncSumBtn: "အမျိုးအစားစုစုပေါင်းကိုယူရန်",
+          sumFromCats: "အမျိုးအစားများမှ စုစုပေါင်း:",
+          stdCatsTitle: "မူလ အမျိုးအစားကန့်သတ်ချက် (¥):",
+          customCatsTitle: "စိတ်ကြိုက်အမျိုးအစားများ:",
+          newCatPh: "အမျိုးအစားအမည်အသစ် (ဥပမာ- အပန်းဖြေ၊ အားကစား...)",
+          addCatBtn: "+ အမျိုးအစားထည့်",
+          cancelBtn: "ပယ်ဖျက်",
+          saveBudgetBtn: "ဘတ်ဂျက်သိမ်းရန်",
+          undoCalc: "↩ ပြန်ပြင်",
+          applyCalcBtn: "အသုံးပြု",
+          calcOperandPh: "တွက်ချက်မည့်ဂဏန်း...",
           cats: {
             "Ăn uống": "အစားအသောက်",
             "Mua sắm": "ဈေးဝယ်",
@@ -1379,7 +2067,7 @@
 
       let currentLang = localStorage.getItem("CASHIES_LANG") || "vi";
       let observer = null;
-      const watchedIds = ["txList", "debtList", "syncBadge", "budgetStatus", "scanStatus", "btnSubmitTx", "btnSubmitDebt"];
+      const watchedIds = ["txList", "debtList", "syncBadge", "budgetStatus", "scanStatus", "btnSubmitTx", "btnSubmitDebt", "categoryBudgetList"];
 
       function setText(el, text) {
         if (el && el.innerText !== text) el.innerText = text;
@@ -1539,10 +2227,61 @@
         const btnSetBudget = document.getElementById("btnSetBudget");
         if (btnSetBudget) {
           setText(btnSetBudget.previousElementSibling, t.ceiling);
-          if (btnSetBudget.parentElement) {
-            setText(btnSetBudget.parentElement.previousElementSibling, t.monthlyBudget);
-          }
         }
+
+        const monthlyBudgetHeading = document.getElementById("monthlyBudgetHeading");
+        if (monthlyBudgetHeading && t.monthlyBudget) setText(monthlyBudgetHeading, t.monthlyBudget);
+
+        const btnOpenBudgetModal = document.getElementById("btnOpenBudgetModal");
+        if (btnOpenBudgetModal && t.setBudgetBtn) {
+          const span = btnOpenBudgetModal.querySelector("span");
+          setText(span || btnOpenBudgetModal, t.setBudgetBtn);
+        }
+
+        const catBudgetsHeader = document.getElementById("catBudgetsHeader");
+        if (catBudgetsHeader && t.catBudgetsHeader) setText(catBudgetsHeader, t.catBudgetsHeader);
+
+        const budgetModalTitle = document.getElementById("budgetModalTitle");
+        if (budgetModalTitle && t.budgetModalTitle) setText(budgetModalTitle, t.budgetModalTitle);
+
+        const budgetModalSub = document.getElementById("budgetModalSub");
+        if (budgetModalSub && t.budgetModalSub) setText(budgetModalSub, t.budgetModalSub);
+
+        const lblTotalMonthlyBudget = document.getElementById("lblTotalMonthlyBudget");
+        if (lblTotalMonthlyBudget && t.totalBudgetLbl) setText(lblTotalMonthlyBudget, t.totalBudgetLbl);
+
+        const btnSyncSumCategories = document.getElementById("btnSyncSumCategories");
+        if (btnSyncSumCategories && t.syncSumBtn) setText(btnSyncSumCategories, t.syncSumBtn);
+
+        const lblSumFromCats = document.getElementById("lblSumFromCats");
+        if (lblSumFromCats && t.sumFromCats) setText(lblSumFromCats, t.sumFromCats);
+
+        const lblStandardCatBudgets = document.getElementById("lblStandardCatBudgets");
+        if (lblStandardCatBudgets && t.stdCatsTitle) setText(lblStandardCatBudgets, t.stdCatsTitle);
+
+        const lblCustomCatBudgets = document.getElementById("lblCustomCatBudgets");
+        if (lblCustomCatBudgets && t.customCatsTitle) setText(lblCustomCatBudgets, t.customCatsTitle);
+
+        const inputNewCatName = document.getElementById("inputNewCatName");
+        if (inputNewCatName && t.newCatPh) setPlaceholder(inputNewCatName, t.newCatPh);
+
+        const btnAddCustomCat = document.getElementById("btnAddCustomCat");
+        if (btnAddCustomCat && t.addCatBtn) setText(btnAddCustomCat, t.addCatBtn);
+
+        const btnCancelBudgetModal = document.getElementById("btnCancelBudgetModal");
+        if (btnCancelBudgetModal && t.cancelBtn) setText(btnCancelBudgetModal, t.cancelBtn);
+
+        const btnSaveBudgetModal = document.getElementById("btnSaveBudgetModal");
+        if (btnSaveBudgetModal && t.saveBudgetBtn) setText(btnSaveBudgetModal, t.saveBudgetBtn);
+
+        const btnUndoCalc = document.getElementById("btnUndoCalc");
+        if (btnUndoCalc && t.undoCalc) setText(btnUndoCalc, t.undoCalc);
+
+        const btnApplyCalc = document.getElementById("btnApplyCalc");
+        if (btnApplyCalc && t.applyCalcBtn) setText(btnApplyCalc, t.applyCalcBtn);
+
+        const calcOperandInput = document.getElementById("calcOperandInput");
+        if (calcOperandInput && t.calcOperandPh) setPlaceholder(calcOperandInput, t.calcOperandPh);
       }
 
       function translateDynamicUI() {
@@ -1659,6 +2398,20 @@
             return lbl;
           });
           if (updated) chartInstance.update();
+        }
+
+        const catBudgetEl = document.getElementById("categoryBudgetList");
+        if (catBudgetEl) {
+          const catSpans = catBudgetEl.querySelectorAll("div.flex > span.font-semibold");
+          catSpans.forEach(span => {
+            const rawCat = span.innerText.trim();
+            let viKey = Object.keys(i18n.vi.cats).find(k => 
+              k === rawCat || i18n.en.cats[k] === rawCat || i18n.ja.cats[k] === rawCat || i18n.my.cats[k] === rawCat
+            );
+            if (viKey && t.cats[viKey] && span.innerText !== t.cats[viKey]) {
+              span.innerText = t.cats[viKey];
+            }
+          });
         }
       }
 
