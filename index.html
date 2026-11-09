@@ -295,12 +295,69 @@
       <!-- CỘT PHẢI (6 cols trên Desktop, 1 col trên Landscape) -->
       <div class="lg:col-span-6 space-y-4 sm:space-y-5">
 
-        <!-- 5. TỶ LỆ CHI TIÊU THÁNG -->
-        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-          <h3 class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu tháng</h3>
-          <div class="h-48 sm:h-52 lg:h-60 mobile-landscape-chart flex items-center justify-center">
-            <canvas id="categoryChart"></canvas>
+        <!-- 5. TỶ LỆ CHI TIÊU (THEO KỲ: 1T / 3T / 6T / 1N & DẠNG TRÒN / CỘT) -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <!-- Header: Tiêu đề, thông tin kỳ chi tiêu & nút điều khiển -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-base">📊</span>
+                <h3 id="chartHeaderTitle" class="font-bold text-sm text-slate-800">Tỷ lệ chi tiêu</h3>
+                <span id="chartPeriodBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">--</span>
+              </div>
+              <p id="chartPeriodSub" class="text-[11px] text-slate-400 mt-0.5"><span id="lblChartTotalSpent">Tổng chi kỳ này:</span> <span id="chartPeriodTotal" class="font-semibold text-slate-700">¥0</span></p>
+            </div>
+
+            <!-- Điều khiển: Chọn kỳ (1T, 3T, 6T, 1N) & Chuyển biểu đồ (Tròn / Cột) -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
+              <!-- Nút chọn kỳ -->
+              <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-medium" id="chartPeriodGroup" role="tablist">
+                <button type="button" data-period="1m" class="chart-period-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition bg-white text-indigo-600 shadow-2xs" title="1 Tháng">
+                  <span class="sm:hidden">1T</span><span class="hidden sm:inline">1 Tháng</span>
+                </button>
+                <button type="button" data-period="3m" class="chart-period-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition" title="3 Tháng">
+                  <span class="sm:hidden">3T</span><span class="hidden sm:inline">3 Tháng</span>
+                </button>
+                <button type="button" data-period="6m" class="chart-period-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition" title="6 Tháng">
+                  <span class="sm:hidden">6T</span><span class="hidden sm:inline">6 Tháng</span>
+                </button>
+                <button type="button" data-period="1y" class="chart-period-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition" title="1 Năm">
+                  <span class="sm:hidden">1N</span><span class="hidden sm:inline">1 Năm</span>
+                </button>
+              </div>
+
+              <!-- Nút chuyển Tròn / Cột -->
+              <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-medium" id="chartTypeGroup">
+                <button type="button" data-type="doughnut" id="btnChartTypeDoughnut" class="chart-type-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition bg-white text-indigo-600 shadow-2xs flex items-center gap-1" title="Biểu đồ tròn">
+                  <span>🍩</span><span class="chart-type-label">Tròn</span>
+                </button>
+                <button type="button" data-type="bar" id="btnChartTypeBar" class="chart-type-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition flex items-center gap-1" title="Biểu đồ cột">
+                  <span>📊</span><span class="chart-type-label">Cột</span>
+                </button>
+              </div>
+            </div>
           </div>
+
+          <!-- Điều khiển phụ cho Biểu đồ cột khi chọn nhiều tháng: Theo danh mục vs Theo từng tháng -->
+          <div id="chartSubControls" class="hidden flex items-center justify-between text-xs text-slate-500 pt-0.5">
+            <span class="text-[11px] text-slate-400" id="lblChartColMode">Chế độ hiển thị:</span>
+            <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px] font-medium" id="chartColumnModeGroup">
+              <button type="button" data-colmode="category" class="chart-colmode-btn px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white text-indigo-600 shadow-2xs" id="btnColModeCat">Theo danh mục</button>
+              <button type="button" data-colmode="month" class="chart-colmode-btn px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-800" id="btnColModeMonth">Theo từng tháng</button>
+            </div>
+          </div>
+
+          <!-- Khung Canvas vẽ biểu đồ -->
+          <div class="relative h-52 sm:h-56 lg:h-60 mobile-landscape-chart flex items-center justify-center">
+            <canvas id="categoryChart"></canvas>
+            <div id="chartEmptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-white/80">
+              <span class="text-3xl mb-1.5 opacity-60">📊</span>
+              <p class="text-xs font-medium text-slate-500" id="chartEmptyMsg">Không có chi tiêu nào trong khoảng thời gian này.</p>
+            </div>
+          </div>
+
+          <!-- Bảng tóm tắt tỷ lệ các danh mục (Chips) -->
+          <div id="chartCategoryChips" class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-50 text-[11px]"></div>
         </section>
 
         <!-- 4. LỊCH SỬ GIAO DỊCH -->
@@ -568,7 +625,18 @@
         savingTx: "Đang lưu...",
         txHistory: "Lịch sử giao dịch",
         noTx: "Không có giao dịch nào trong tháng này.",
-        chartTitle: "Tỷ lệ chi tiêu tháng",
+        chartTitle: "Tỷ lệ chi tiêu",
+        chartTypeDoughnut: "Tròn",
+        chartTypeBar: "Cột",
+        period1M: "1 Tháng",
+        period3M: "3 Tháng",
+        period6M: "6 Tháng",
+        period1Y: "1 Năm",
+        chartColModeCategory: "Theo danh mục",
+        chartColModeMonth: "Theo từng tháng",
+        chartEmptyMsg: "Không có chi tiêu nào trong khoảng thời gian này.",
+        chartTotalSpentLbl: "Tổng chi kỳ này:",
+        chartColModeLbl: "Chế độ hiển thị:",
         debtBook: "Sổ Nợ (Việt Nam)",
         debtSub: "Theo dõi nợ riêng bằng đơn vị VNĐ",
         totalRemDebt: "Tổng nợ còn lại",
@@ -669,7 +737,18 @@
         savingTx: "Saving...",
         txHistory: "Transaction History",
         noTx: "No transactions this month.",
-        chartTitle: "Monthly Expense Ratio",
+        chartTitle: "Expense Ratio",
+        chartTypeDoughnut: "Donut",
+        chartTypeBar: "Column",
+        period1M: "1 Month",
+        period3M: "3 Months",
+        period6M: "6 Months",
+        period1Y: "1 Year",
+        chartColModeCategory: "By Category",
+        chartColModeMonth: "By Month",
+        chartEmptyMsg: "No expenses recorded in this period.",
+        chartTotalSpentLbl: "Total period spent:",
+        chartColModeLbl: "Display mode:",
         debtBook: "Debt Book (VND)",
         debtSub: "Track separate debts in VND",
         totalRemDebt: "Total Remaining Debt",
@@ -770,7 +849,18 @@
         savingTx: "保存中...",
         txHistory: "取引履歴",
         noTx: "今月の取引はありません。",
-        chartTitle: "月間支出の割合",
+        chartTitle: "支出割合",
+        chartTypeDoughnut: "円",
+        chartTypeBar: "棒",
+        period1M: "1ヶ月",
+        period3M: "3ヶ月",
+        period6M: "6ヶ月",
+        period1Y: "1年",
+        chartColModeCategory: "カテゴリー別",
+        chartColModeMonth: "月別",
+        chartEmptyMsg: "この期間の支出データはありません。",
+        chartTotalSpentLbl: "今期の総支出:",
+        chartColModeLbl: "表示モード:",
         debtBook: "借入金帳簿 (VND)",
         debtSub: "VND単位で個別に借入を管理",
         totalRemDebt: "残りの借入総額",
@@ -871,7 +961,18 @@
         savingTx: "သိမ်းနေသည်...",
         txHistory: "စာရင်းမှတ်တမ်း",
         noTx: "ဤလအတွက် စာရင်းမရှိပါ။",
-        chartTitle: "လစဉ် အသုံးစရိတ် အချိုးအစား",
+        chartTitle: "အသုံးစရိတ် အချိုးအစား",
+        chartTypeDoughnut: "အဝိုင်း",
+        chartTypeBar: "ဒေါင်လိုက်",
+        period1M: "၁ လ",
+        period3M: "၃ လ",
+        period6M: "၆ လ",
+        period1Y: "၁ နှစ်",
+        chartColModeCategory: "အမျိုးအစားအလိုက်",
+        chartColModeMonth: "လအလိုက်",
+        chartEmptyMsg: "ဤကာလတွင် အသုံးစရိတ်မှတ်တမ်းမရှိပါ။",
+        chartTotalSpentLbl: "စုစုပေါင်း အသုံးစရိတ်:",
+        chartColModeLbl: "ပြသမှု ပုံစံ:",
         debtBook: "အကြွေးစာအုပ် (VND)",
         debtSub: "VND ဖြင့် အကြွေးစာရင်း သီးသန့်မှတ်ရန်",
         totalRemDebt: "ကျန်ရှိသော အကြွေးစုစုပေါင်း",
@@ -989,6 +1090,9 @@
     let weeklyCategoryBudgets = {};
     let customCategories = [];
     let chartInstance = null;
+    let currentChartPeriod = localStorage.getItem("CASHIES_CHART_PERIOD") || "1m"; // "1m" | "3m" | "6m" | "1y"
+    let currentChartType = localStorage.getItem("CASHIES_CHART_TYPE") || "doughnut"; // "doughnut" | "bar"
+    let currentChartColMode = localStorage.getItem("CASHIES_CHART_COLMODE") || "category"; // "category" | "month"
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
     let currentMonthNet = 0;
@@ -1679,6 +1783,33 @@
         setBudgetPeriod("week");
       });
     }
+
+    // Sự kiện điều khiển Biểu đồ Tỷ lệ chi tiêu (1T/3T/6T/1N & Tròn/Cột)
+    document.querySelectorAll(".chart-period-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        setChartPeriod(this.getAttribute("data-period"));
+      });
+    });
+
+    const btnChartTypeDoughnutEl = document.getElementById("btnChartTypeDoughnut");
+    if (btnChartTypeDoughnutEl) {
+      btnChartTypeDoughnutEl.addEventListener("click", function() {
+        setChartType("doughnut");
+      });
+    }
+
+    const btnChartTypeBarEl = document.getElementById("btnChartTypeBar");
+    if (btnChartTypeBarEl) {
+      btnChartTypeBarEl.addEventListener("click", function() {
+        setChartType("bar");
+      });
+    }
+
+    document.querySelectorAll(".chart-colmode-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        setChartColMode(this.getAttribute("data-colmode"));
+      });
+    });
 
     if (tabModalMonth) {
       tabModalMonth.addEventListener("click", function() {
@@ -2411,43 +2542,438 @@
       }).join("");
     }
 
-    function renderChart(catMap) {
-      const rawLabels = Object.keys(catMap);
-      const data = Object.values(catMap);
-      const displayLabels = rawLabels.map(function(lbl) {
-        return tCat(lbl);
+    // ==========================================
+    // 5.1 XỬ LÝ BIỂU ĐỒ TỶ LỆ CHI TIÊU (1T, 3T, 6T, 1N & TRÒN / CỘT)
+    // ==========================================
+    const PALETTE_CHART = [
+      "#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", 
+      "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#14B8A6", 
+      "#64748B", "#A855F7", "#3B82F6", "#E11D48"
+    ];
+
+    function getMonthsForPeriod(baseMonthStr, period) {
+      if (!baseMonthStr) {
+        baseMonthStr = (filterMonth && filterMonth.value) ? filterMonth.value : new Date().toISOString().slice(0, 7);
+      }
+      const parts = baseMonthStr.split("-").map(Number);
+      const baseYear = parts[0] || new Date().getFullYear();
+      const baseMonth = parts[1] || (new Date().getMonth() + 1);
+
+      let count = 1;
+      if (period === "3m") count = 3;
+      else if (period === "6m") count = 6;
+      else if (period === "1y") count = 12;
+
+      const months = [];
+      for (let i = count - 1; i >= 0; i--) {
+        const d = new Date(baseYear, baseMonth - 1 - i, 1);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        months.push(y + "-" + m);
+      }
+      return months;
+    }
+
+    function formatPeriodBadge(months) {
+      if (!months || !months.length) return "";
+      if (months.length === 1) {
+        const p = months[0].split("-");
+        return p[1] + "/" + p[0];
+      }
+      const startP = months[0].split("-");
+      const endP = months[months.length - 1].split("-");
+      if (startP[0] === endP[0]) {
+        return startP[1] + " - " + endP[1] + "/" + endP[0];
+      }
+      return startP[1] + "/" + startP[0].slice(2) + " - " + endP[1] + "/" + endP[0].slice(2);
+    }
+
+    function setChartPeriod(period) {
+      currentChartPeriod = period;
+      localStorage.setItem("CASHIES_CHART_PERIOD", period);
+      updateChartPeriodUI();
+      renderChart();
+    }
+
+    function updateChartPeriodUI() {
+      const btns = document.querySelectorAll(".chart-period-btn");
+      btns.forEach(function(btn) {
+        const p = btn.getAttribute("data-period");
+        if (p === currentChartPeriod) {
+          btn.className = "chart-period-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition bg-white text-indigo-600 shadow-2xs";
+        } else {
+          btn.className = "chart-period-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition";
+        }
       });
 
+      const subControls = document.getElementById("chartSubControls");
+      if (subControls) {
+        if (currentChartType === "bar" && currentChartPeriod !== "1m") {
+          subControls.classList.remove("hidden");
+        } else {
+          subControls.classList.add("hidden");
+        }
+      }
+    }
+
+    function setChartType(type) {
+      currentChartType = type;
+      localStorage.setItem("CASHIES_CHART_TYPE", type);
+      updateChartTypeUI();
+      renderChart();
+    }
+
+    function updateChartTypeUI() {
+      const btnDoughnut = document.getElementById("btnChartTypeDoughnut");
+      const btnBar = document.getElementById("btnChartTypeBar");
+
+      if (btnDoughnut && btnBar) {
+        if (currentChartType === "doughnut") {
+          btnDoughnut.className = "chart-type-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition bg-white text-indigo-600 shadow-2xs flex items-center gap-1";
+          btnBar.className = "chart-type-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition flex items-center gap-1";
+        } else {
+          btnBar.className = "chart-type-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition bg-white text-indigo-600 shadow-2xs flex items-center gap-1";
+          btnDoughnut.className = "chart-type-btn px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 transition flex items-center gap-1";
+        }
+      }
+
+      const subControls = document.getElementById("chartSubControls");
+      if (subControls) {
+        if (currentChartType === "bar" && currentChartPeriod !== "1m") {
+          subControls.classList.remove("hidden");
+        } else {
+          subControls.classList.add("hidden");
+        }
+      }
+    }
+
+    function setChartColMode(colMode) {
+      currentChartColMode = colMode;
+      localStorage.setItem("CASHIES_CHART_COLMODE", colMode);
+      updateChartColModeUI();
+      renderChart();
+    }
+
+    function updateChartColModeUI() {
+      const btnCat = document.getElementById("btnColModeCat");
+      const btnMonth = document.getElementById("btnColModeMonth");
+      if (btnCat && btnMonth) {
+        if (currentChartColMode === "category") {
+          btnCat.className = "chart-colmode-btn px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white text-indigo-600 shadow-2xs";
+          btnMonth.className = "chart-colmode-btn px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-800";
+        } else {
+          btnMonth.className = "chart-colmode-btn px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white text-indigo-600 shadow-2xs";
+          btnCat.className = "chart-colmode-btn px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-800";
+        }
+      }
+    }
+
+    function renderCategoryChips(catMap, totalExp) {
+      const container = document.getElementById("chartCategoryChips");
+      if (!container) return;
+      const sortedKeys = Object.keys(catMap).sort(function(a, b) {
+        return (catMap[b] || 0) - (catMap[a] || 0);
+      });
+      if (sortedKeys.length === 0 || totalExp <= 0) {
+        container.innerHTML = "";
+        return;
+      }
+      container.innerHTML = sortedKeys.map(function(key, idx) {
+        const val = catMap[key] || 0;
+        const pct = Math.round((val / totalExp) * 100);
+        const color = PALETTE_CHART[idx % PALETTE_CHART.length];
+        return '<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 text-slate-700">' +
+          '<span class="w-2 h-2 rounded-full shrink-0" style="background-color: ' + color + '"></span>' +
+          '<span class="font-medium truncate max-w-[110px]">' + tCat(key) + '</span>' +
+          '<span class="text-slate-400 font-normal">' + formatJPY(val) + '</span>' +
+          '<span class="font-semibold text-slate-900">' + pct + '%</span>' +
+        '</span>';
+      }).join("");
+    }
+
+    function renderMonthlyChips(monthsIncluded, monthSums, totalPeriodSum) {
+      const container = document.getElementById("chartCategoryChips");
+      if (!container) return;
+      if (!monthsIncluded.length || totalPeriodSum <= 0) {
+        container.innerHTML = "";
+        return;
+      }
+      container.innerHTML = monthsIncluded.map(function(m) {
+        const val = monthSums[m] || 0;
+        const pct = Math.round((val / totalPeriodSum) * 100);
+        const p = m.split("-");
+        const label = "T" + p[1] + "/" + p[0].slice(2);
+        return '<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 text-slate-700">' +
+          '<span class="w-2 h-2 rounded-full shrink-0 bg-indigo-500"></span>' +
+          '<span class="font-medium">' + label + '</span>' +
+          '<span class="text-slate-400 font-normal">' + formatJPY(val) + '</span>' +
+          '<span class="font-semibold text-slate-900">' + pct + '%</span>' +
+        '</span>';
+      }).join("");
+    }
+
+    function renderChart(unusedCatMap) {
       if (chartInstance) {
         chartInstance.destroy();
+        chartInstance = null;
       }
 
       const canvas = document.getElementById("categoryChart");
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
-      if (rawLabels.length === 0) {
-        ctx.clearRect(0, 0, 200, 200);
+
+      const selectedMonth = (filterMonth && filterMonth.value) ? filterMonth.value : new Date().toISOString().slice(0, 7);
+      const monthsIncluded = getMonthsForPeriod(selectedMonth, currentChartPeriod);
+
+      // Cập nhật nhãn khoảng thời gian
+      const periodBadgeEl = document.getElementById("chartPeriodBadge");
+      if (periodBadgeEl) {
+        periodBadgeEl.innerText = formatPeriodBadge(monthsIncluded);
+      }
+
+      // Lọc danh sách giao dịch chi tiêu theo các tháng đã chọn
+      const periodFiltered = (transactions || []).filter(function(tItem) {
+        if (tItem.type !== "expense" || !tItem.date) return false;
+        const m = tItem.date.slice(0, 7);
+        return monthsIncluded.includes(m);
+      });
+
+      let totalPeriodExp = 0;
+      const catMap = {};
+      const monthSums = {};
+      const monthTopCats = {};
+
+      monthsIncluded.forEach(function(m) {
+        monthSums[m] = 0;
+        monthTopCats[m] = {};
+      });
+
+      periodFiltered.forEach(function(tItem) {
+        const amt = Number(tItem.amount) || 0;
+        totalPeriodExp += amt;
+        catMap[tItem.category] = (catMap[tItem.category] || 0) + amt;
+
+        const m = tItem.date.slice(0, 7);
+        if (monthSums[m] !== undefined) {
+          monthSums[m] += amt;
+          monthTopCats[m][tItem.category] = (monthTopCats[m][tItem.category] || 0) + amt;
+        }
+      });
+
+      // Cập nhật tổng chi kỳ
+      const periodTotalEl = document.getElementById("chartPeriodTotal");
+      if (periodTotalEl) {
+        periodTotalEl.innerText = formatJPY(totalPeriodExp);
+      }
+
+      const emptyStateEl = document.getElementById("chartEmptyState");
+      const chipsContainer = document.getElementById("chartCategoryChips");
+
+      // Nếu không có dữ liệu chi tiêu
+      if (periodFiltered.length === 0 || totalPeriodExp === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (emptyStateEl) emptyStateEl.classList.remove("hidden");
+        if (chipsContainer) chipsContainer.innerHTML = "";
+        return;
+      } else {
+        if (emptyStateEl) emptyStateEl.classList.add("hidden");
+      }
+
+      // Chế độ: Biểu đồ cột theo từng tháng
+      if (currentChartType === "bar" && currentChartPeriod !== "1m" && currentChartColMode === "month") {
+        renderMonthlyChips(monthsIncluded, monthSums, totalPeriodExp);
+
+        const labels = monthsIncluded.map(function(m) {
+          const p = m.split("-");
+          return "T" + p[1] + "/" + p[0].slice(2);
+        });
+        const data = monthsIncluded.map(function(m) {
+          return monthSums[m] || 0;
+        });
+        const bgColors = monthsIncluded.map(function(m, idx) {
+          return idx === monthsIncluded.length - 1 ? "#4F46E5" : "#818CF8";
+        });
+
+        chartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: t("totalExpense") || "Tổng Chi",
+              data: data,
+              backgroundColor: bgColors,
+              borderRadius: 6,
+              borderSkipped: false,
+              maxBarThickness: 44
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: function(items) {
+                    if (!items.length) return "";
+                    const idx = items[0].dataIndex;
+                    const m = monthsIncluded[idx];
+                    const p = m.split("-");
+                    return "Tháng " + p[1] + "/" + p[0];
+                  },
+                  label: function(context) {
+                    const val = context.raw || 0;
+                    const pct = totalPeriodExp > 0 ? ((val / totalPeriodExp) * 100).toFixed(1) : "0.0";
+                    return " Chi tiêu: " + formatJPY(val) + " (" + pct + "%)";
+                  },
+                  afterBody: function(items) {
+                    if (!items.length) return [];
+                    const idx = items[0].dataIndex;
+                    const m = monthsIncluded[idx];
+                    const catsInMonth = monthTopCats[m] || {};
+                    const sortedCats = Object.keys(catsInMonth).sort(function(a, b) {
+                      return catsInMonth[b] - catsInMonth[a];
+                    });
+                    if (sortedCats.length === 0) return [];
+                    const topList = sortedCats.slice(0, 3).map(function(c) {
+                      return " • " + tCat(c) + ": " + formatJPY(catsInMonth[c]);
+                    });
+                    return ["Top danh mục:"].concat(topList);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { font: { size: 11 } }
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: "#f8fafc" },
+                ticks: {
+                  font: { size: 10 },
+                  callback: function(value) {
+                    if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+                    if (value >= 1000) return (value / 1000).toFixed(0) + "k";
+                    return value;
+                  }
+                }
+              }
+            }
+          }
+        });
         return;
       }
 
+      // Sắp xếp danh mục theo chi tiêu giảm dần
+      renderCategoryChips(catMap, totalPeriodExp);
+      const sortedKeys = Object.keys(catMap).sort(function(a, b) {
+        return (catMap[b] || 0) - (catMap[a] || 0);
+      });
+      const data = sortedKeys.map(function(k) { return catMap[k]; });
+      const displayLabels = sortedKeys.map(function(k) { return tCat(k); });
+      const bgColors = sortedKeys.map(function(_, i) { return PALETTE_CHART[i % PALETTE_CHART.length]; });
+
+      // Chế độ: Biểu đồ cột theo danh mục
+      if (currentChartType === "bar") {
+        chartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: displayLabels,
+            datasets: [{
+              label: t("totalExpense") || "Tổng Chi",
+              data: data,
+              backgroundColor: bgColors,
+              borderRadius: 6,
+              borderSkipped: false,
+              maxBarThickness: 42
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const val = context.raw || 0;
+                    const pct = totalPeriodExp > 0 ? ((val / totalPeriodExp) * 100).toFixed(1) : "0.0";
+                    return " " + formatJPY(val) + " (" + pct + "%)";
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  font: { size: 11 },
+                  maxRotation: 40,
+                  minRotation: 0,
+                  autoSkip: false
+                }
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: "#f8fafc" },
+                ticks: {
+                  font: { size: 10 },
+                  callback: function(value) {
+                    if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+                    if (value >= 1000) return (value / 1000).toFixed(0) + "k";
+                    return value;
+                  }
+                }
+              }
+            }
+          }
+        });
+        return;
+      }
+
+      // Chế độ: Biểu đồ tròn (Doughnut)
       chartInstance = new Chart(ctx, {
         type: "doughnut",
         data: {
           labels: displayLabels,
           datasets: [{
             data: data,
-            backgroundColor: [
-              "#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", 
-              "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#14B8A6", 
-              "#64748B", "#A855F7", "#3B82F6", "#E11D48"
-            ]
+            backgroundColor: bgColors,
+            borderWidth: 2,
+            borderColor: "#ffffff"
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: "right", labels: { boxWidth: 10, font: { size: 11 } } }
+            legend: {
+              position: "right",
+              labels: {
+                boxWidth: 10,
+                font: { size: 11 },
+                generateLabels: function(chart) {
+                  const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+                  return original.map(function(item) {
+                    const val = chart.data.datasets[0].data[item.index] || 0;
+                    const pct = totalPeriodExp > 0 ? Math.round((val / totalPeriodExp) * 100) : 0;
+                    item.text = item.text + " (" + pct + "%)";
+                    return item;
+                  });
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = context.raw || 0;
+                  const pct = totalPeriodExp > 0 ? ((val / totalPeriodExp) * 100).toFixed(1) : "0.0";
+                  return " " + context.label + ": " + formatJPY(val) + " (" + pct + "%)";
+                }
+              }
+            }
           }
         }
       });
@@ -2873,11 +3399,31 @@
         const txListEl = document.getElementById("txList");
         if (txListEl) setText(txListEl.previousElementSibling, t.txHistory);
 
-        const chartCanvas = document.getElementById("categoryChart");
-        if (chartCanvas) {
-          const chartSection = chartCanvas.closest("section");
-          if (chartSection) setText(chartSection.querySelector("h3"), t.chartTitle);
+        const chartHeaderTitle = document.getElementById("chartHeaderTitle");
+        if (chartHeaderTitle && t.chartTitle) setText(chartHeaderTitle, t.chartTitle);
+
+        const btnChartTypeDoughnut = document.getElementById("btnChartTypeDoughnut");
+        if (btnChartTypeDoughnut && t.chartTypeDoughnut) {
+          const lbl = btnChartTypeDoughnut.querySelector(".chart-type-label");
+          if (lbl) setText(lbl, t.chartTypeDoughnut);
         }
+        const btnChartTypeBar = document.getElementById("btnChartTypeBar");
+        if (btnChartTypeBar && t.chartTypeBar) {
+          const lbl = btnChartTypeBar.querySelector(".chart-type-label");
+          if (lbl) setText(lbl, t.chartTypeBar);
+        }
+
+        const btnColModeCat = document.getElementById("btnColModeCat");
+        if (btnColModeCat && t.chartColModeCategory) setText(btnColModeCat, t.chartColModeCategory);
+        const btnColModeMonth = document.getElementById("btnColModeMonth");
+        if (btnColModeMonth && t.chartColModeMonth) setText(btnColModeMonth, t.chartColModeMonth);
+
+        const lblChartTotalSpent = document.getElementById("lblChartTotalSpent");
+        if (lblChartTotalSpent && t.chartTotalSpentLbl) setText(lblChartTotalSpent, t.chartTotalSpentLbl);
+        const lblChartColMode = document.getElementById("lblChartColMode");
+        if (lblChartColMode && t.chartColModeLbl) setText(lblChartColMode, t.chartColModeLbl);
+        const chartEmptyMsgEl = document.getElementById("chartEmptyMsg");
+        if (chartEmptyMsgEl && t.chartEmptyMsg) setText(chartEmptyMsgEl, t.chartEmptyMsg);
 
         const debtFormEl = document.getElementById("debtForm");
         if (debtFormEl) {
@@ -3013,6 +3559,9 @@
 
         runAllTranslations();
         updateBudgetPeriodUI();
+        updateChartPeriodUI();
+        updateChartTypeUI();
+        updateChartColModeUI();
         updateCategoryDropdown();
         renderAll();
         renderDebts();
