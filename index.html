@@ -114,22 +114,31 @@
 
       <!-- 2. TỔNG THU - CHI, SỐ DƯ -->
       <section class="lg:col-span-8 landscape:col-span-8 grid grid-cols-3 gap-2 sm:gap-3">
-        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-          <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
-          <p id="totalIncome" class="text-sm sm:text-base lg:text-lg font-bold text-emerald-600 mt-1 truncate">¥0</p>
-        </div>
-        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-          <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
-          <p id="totalExpense" class="text-sm sm:text-base lg:text-lg font-bold text-rose-600 mt-1 truncate">¥0</p>
-        </div>
-        <div id="cardBalance" class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all duration-150 group" title="Bấm để điều chỉnh số dư thực tế">
-          <div class="flex items-center justify-between">
-            <p id="netBalanceLabel" class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
-            <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-            </svg>
+        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Tổng Thu</p>
+            <p id="totalIncome" class="text-sm sm:text-base lg:text-lg font-bold text-emerald-600 mt-1 truncate">¥0</p>
           </div>
-          <p id="netBalance" class="text-sm sm:text-base lg:text-lg font-bold text-slate-800 mt-1 truncate">¥0</p>
+          <p class="text-[10px] text-slate-400 mt-0.5 truncate hidden sm:block" id="lblIncomeSub">Tháng đang chọn</p>
+        </div>
+        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Tổng Chi</p>
+            <p id="totalExpense" class="text-sm sm:text-base lg:text-lg font-bold text-rose-600 mt-1 truncate">¥0</p>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-0.5 truncate hidden sm:block" id="lblExpenseSub">Tháng đang chọn</p>
+        </div>
+        <div id="cardBalance" class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all duration-150 group flex flex-col justify-between" title="Bấm để điều chỉnh số dư thực tế">
+          <div>
+            <div class="flex items-center justify-between">
+              <p id="netBalanceLabel" class="text-xs text-slate-400 font-medium group-hover:text-indigo-600 transition">Số Dư</p>
+              <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+              </svg>
+            </div>
+            <p id="netBalance" class="text-sm sm:text-base lg:text-lg font-bold text-slate-800 mt-1 truncate">¥0</p>
+          </div>
+          <p id="netBalanceSub" class="text-[10px] text-slate-400 mt-0.5 truncate hidden sm:block">Thu - Chi: +¥0</p>
         </div>
       </section>
     </div>
@@ -450,6 +459,59 @@
     </div>
   </div>
 
+  <!-- MODAL CHỈNH SỬA GIAO DỊCH -->
+  <div id="editTxModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs hidden transition-opacity">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
+        <div>
+          <h3 class="font-bold text-base text-slate-800" id="lblEditTxTitle">Chỉnh sửa giao dịch</h3>
+          <p class="text-xs text-slate-400" id="lblEditTxSub">Cập nhật thông tin giao dịch đã ghi nhận</p>
+        </div>
+        <button type="button" id="btnCloseEditTxModal" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition text-sm">✕</button>
+      </div>
+
+      <form id="editTxForm" class="p-4 sm:p-5 space-y-4 text-xs">
+        <input type="hidden" id="editTxId">
+        
+        <!-- Loại: Chi tiêu / Thu nhập -->
+        <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl font-semibold">
+          <button type="button" id="btnEditTypeExpense" class="py-2 rounded-lg bg-white text-slate-800 shadow-2xs transition">Chi tiêu (-)</button>
+          <button type="button" id="btnEditTypeIncome" class="py-2 rounded-lg text-slate-500 hover:text-slate-800 transition">Thu nhập (+)</button>
+        </div>
+
+        <!-- Số tiền -->
+        <div>
+          <label class="block text-slate-500 font-medium mb-1" id="lblEditTxAmount">Số tiền (¥)</label>
+          <input type="text" id="editTxAmount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- Ngày giao dịch -->
+        <div>
+          <label class="block text-slate-500 font-medium mb-1" id="lblEditTxDate">Ngày giao dịch</label>
+          <input type="date" id="editTxDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- Danh mục -->
+        <div>
+          <label class="block text-slate-500 font-medium mb-1" id="lblEditTxCategory">Danh mục</label>
+          <select id="editTxCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </select>
+        </div>
+
+        <!-- Ghi chú -->
+        <div>
+          <label class="block text-slate-500 font-medium mb-1" id="lblEditTxNote">Ghi chú</label>
+          <input type="text" id="editTxNote" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+          <button type="button" id="btnCancelEditTx" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition">Hủy</button>
+          <button type="submit" id="btnSubmitEditTx" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // ==========================================
     // 1. CẤU HÌNH FIREBASE
@@ -562,6 +624,11 @@
         undoCalc: "↩ Hoàn tác",
         applyCalcBtn: "Áp dụng",
         calcOperandPh: "Số cần tính...",
+        monthNet: "Thu - Chi",
+        editTxTitle: "Chỉnh sửa giao dịch",
+        editTxSub: "Cập nhật thông tin giao dịch đã ghi nhận",
+        saveChanges: "Lưu thay đổi",
+        monthPeriodSelected: "Tháng đang chọn",
         cats: {
           "Ăn uống": "Ăn uống",
           "Mua sắm": "Mua sắm",
@@ -658,6 +725,11 @@
         undoCalc: "↩ Undo",
         applyCalcBtn: "Apply",
         calcOperandPh: "Number...",
+        monthNet: "Net Month",
+        editTxTitle: "Edit Transaction",
+        editTxSub: "Update recorded transaction details",
+        saveChanges: "Save Changes",
+        monthPeriodSelected: "Selected month",
         cats: {
           "Ăn uống": "Food & Dining",
           "Mua sắm": "Shopping",
@@ -754,6 +826,11 @@
         undoCalc: "↩ 元に戻す",
         applyCalcBtn: "適用",
         calcOperandPh: "計算する数値...",
+        monthNet: "当月収支",
+        editTxTitle: "取引の編集",
+        editTxSub: "記録された取引内容を更新",
+        saveChanges: "変更を保存",
+        monthPeriodSelected: "選択月",
         cats: {
           "Ăn uống": "食費",
           "Mua sắm": "買い物",
@@ -850,6 +927,11 @@
         undoCalc: "↩ ပြန်ပြင်",
         applyCalcBtn: "အသုံးပြု",
         calcOperandPh: "တွက်ချက်မည့်ဂဏန်း...",
+        monthNet: "အသားတင်",
+        editTxTitle: "စာရင်းပြင်ဆင်ရန်",
+        editTxSub: "မှတ်တမ်းတင်ထားသော အချက်အလက်များကို ပြင်ဆင်ရန်",
+        saveChanges: "အပြောင်းအလဲ သိမ်းရန်",
+        monthPeriodSelected: "ရွေးချယ်ထားသောလ",
         cats: {
           "Ăn uống": "အစားအသောက်",
           "Mua sắm": "ဈေးဝယ်",
@@ -910,6 +992,8 @@
     let isSubmittingTx = false;
     let isSubmittingDebt = false;
     let currentMonthNet = 0;
+    let totalCurrentBalance = 0;
+    let currentEditTxType = "expense";
     let lastOriginalAmount = null;
     let activeCalcOp = "/";
     let activeModalTab = "month";
@@ -936,7 +1020,24 @@
     const totalIncomeEl = document.getElementById("totalIncome");
     const totalExpenseEl = document.getElementById("totalExpense");
     const netBalanceEl = document.getElementById("netBalance");
+    const netBalanceSub = document.getElementById("netBalanceSub");
+    const lblIncomeSub = document.getElementById("lblIncomeSub");
+    const lblExpenseSub = document.getElementById("lblExpenseSub");
     const cardBalance = document.getElementById("cardBalance");
+
+    // Modal Chỉnh sửa giao dịch
+    const editTxModal = document.getElementById("editTxModal");
+    const editTxForm = document.getElementById("editTxForm");
+    const editTxId = document.getElementById("editTxId");
+    const btnEditTypeExpense = document.getElementById("btnEditTypeExpense");
+    const btnEditTypeIncome = document.getElementById("btnEditTypeIncome");
+    const editTxAmount = document.getElementById("editTxAmount");
+    const editTxDate = document.getElementById("editTxDate");
+    const editTxCategory = document.getElementById("editTxCategory");
+    const editTxNote = document.getElementById("editTxNote");
+    const btnCloseEditTxModal = document.getElementById("btnCloseEditTxModal");
+    const btnCancelEditTx = document.getElementById("btnCancelEditTx");
+    const btnSubmitEditTx = document.getElementById("btnSubmitEditTx");
 
     // Section 7: Budget Card Elements
     const budgetHeading = document.getElementById("budgetHeading");
@@ -1020,7 +1121,15 @@
     const totalRemainingDebt = document.getElementById("totalRemainingDebt");
     const btnSubmitDebt = document.getElementById("btnSubmitDebt");
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    function getLocalDateStr() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return year + "-" + month + "-" + day;
+    }
+
+    const todayStr = getLocalDateStr();
     txDate.value = todayStr;
     filterMonth.value = todayStr.slice(0, 7);
 
@@ -1193,8 +1302,6 @@
     }
 
     function updateCategoryDropdown() {
-      if (!txCategory) return;
-      const currentVal = txCategory.value;
       const standardList = [
         "Ăn uống", "Mua sắm", "Đi lại", "Nhà cửa & Hóa đơn", "Học tập / Công việc"
       ];
@@ -1210,10 +1317,21 @@
 
       optionsHtml += '<option value="Lương">' + tCat("Lương") + '</option>';
       optionsHtml += '<option value="Khác">' + tCat("Khác") + '</option>';
-      txCategory.innerHTML = optionsHtml;
 
-      if (currentVal && Array.from(txCategory.options).some(function(o) { return o.value === currentVal; })) {
-        txCategory.value = currentVal;
+      if (txCategory) {
+        const currentVal = txCategory.value;
+        txCategory.innerHTML = optionsHtml;
+        if (currentVal && Array.from(txCategory.options).some(function(o) { return o.value === currentVal; })) {
+          txCategory.value = currentVal;
+        }
+      }
+
+      if (typeof editTxCategory !== "undefined" && editTxCategory) {
+        const currentEditVal = editTxCategory.value;
+        editTxCategory.innerHTML = optionsHtml;
+        if (currentEditVal && Array.from(editTxCategory.options).some(function(o) { return o.value === currentEditVal; })) {
+          editTxCategory.value = currentEditVal;
+        }
       }
     }
 
@@ -1575,9 +1693,8 @@
 
     cardBalance.addEventListener("click", async function() {
       if (!currentUser) return;
-      const selectedMonth = filterMonth.value;
-      const defaultVal = String(currentMonthNet);
-      const promptMsg = "Số dư tính toán tháng " + selectedMonth + " hiện tại là: " + formatJPY(currentMonthNet) + 
+      const defaultVal = String(totalCurrentBalance);
+      const promptMsg = "Số dư ví hiện tại là: " + formatJPY(totalCurrentBalance) + 
         "\n\nNhập số dư thực tế trong ví của bạn (¥):";
       const input = prompt(promptMsg, defaultVal);
       if (input === null) return;
@@ -1591,9 +1708,9 @@
         return;
       }
 
-      const diff = targetBalance - currentMonthNet;
+      const diff = targetBalance - totalCurrentBalance;
       if (diff === 0) {
-        alert("Số dư thực tế đã khớp với số dư hiển thị (" + formatJPY(targetBalance) + "), không cần điều chỉnh!");
+        alert("Số dư thực tế đã khớp với số dư hiện tại (" + formatJPY(targetBalance) + "), không cần điều chỉnh!");
         return;
       }
 
@@ -1610,26 +1727,135 @@
         "Bạn có đồng ý không?";
       if (!confirm(confirmMsg)) return;
 
-      let chosenDate = todayStr;
-      if (!chosenDate.startsWith(selectedMonth)) {
-        chosenDate = selectedMonth + "-01";
-      }
-
+      const recordDate = getLocalDateStr();
       const record = {
         amount: amountDiff,
         type: txType,
         category: "Khác",
-        date: chosenDate,
+        date: recordDate,
         note: "Điều chỉnh số dư ví (" + (isPositive ? "+" : "-") + ")",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("transactions").add(record);
+        const curMonth = recordDate.slice(0, 7);
+        if (filterMonth.value !== curMonth) {
+          filterMonth.value = curMonth;
+          renderAll();
+        }
       } catch (err) {
         alert("Lỗi khi điều chỉnh số dư: " + err.message);
       }
     });
+
+    // ==========================================
+    // 4.3 MODAL CHỈNH SỬA GIAO DỊCH
+    // ==========================================
+    function setEditTxType(type) {
+      currentEditTxType = type;
+      if (!btnEditTypeExpense || !btnEditTypeIncome) return;
+      if (type === "expense") {
+        btnEditTypeExpense.className = "py-2 rounded-lg bg-white text-slate-800 shadow-2xs transition font-semibold";
+        btnEditTypeIncome.className = "py-2 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium";
+      } else {
+        btnEditTypeIncome.className = "py-2 rounded-lg bg-white text-slate-800 shadow-2xs transition font-semibold";
+        btnEditTypeExpense.className = "py-2 rounded-lg text-slate-500 hover:text-slate-800 transition font-medium";
+      }
+    }
+
+    if (btnEditTypeExpense) {
+      btnEditTypeExpense.addEventListener("click", function() {
+        setEditTxType("expense");
+      });
+    }
+    if (btnEditTypeIncome) {
+      btnEditTypeIncome.addEventListener("click", function() {
+        setEditTxType("income");
+      });
+    }
+
+    function openEditTxModal(id) {
+      if (!currentUser) return;
+      const tx = transactions.find(function(tItem) { return tItem.id === id; });
+      if (!tx) {
+        alert("Không tìm thấy giao dịch này!");
+        return;
+      }
+
+      if (editTxId) editTxId.value = tx.id;
+      if (editTxAmount) editTxAmount.value = tx.amount;
+      if (editTxDate) editTxDate.value = tx.date || todayStr;
+      setEditTxType(tx.type || "expense");
+
+      updateCategoryDropdown();
+      if (editTxCategory && tx.category) {
+        if (Array.from(editTxCategory.options).some(function(o) { return o.value === tx.category; })) {
+          editTxCategory.value = tx.category;
+        }
+      }
+      if (editTxNote) editTxNote.value = tx.note || "";
+
+      if (editTxModal) editTxModal.classList.remove("hidden");
+    }
+
+    function closeEditTxModal() {
+      if (editTxModal) editTxModal.classList.add("hidden");
+    }
+
+    if (btnCloseEditTxModal) btnCloseEditTxModal.addEventListener("click", closeEditTxModal);
+    if (btnCancelEditTx) btnCancelEditTx.addEventListener("click", closeEditTxModal);
+    if (editTxModal) {
+      editTxModal.addEventListener("click", function(e) {
+        if (e.target === editTxModal) closeEditTxModal();
+      });
+    }
+
+    if (editTxForm) {
+      editTxForm.addEventListener("submit", async function(e) {
+        e.preventDefault();
+        if (!currentUser) return;
+        const txId = editTxId.value;
+        if (!txId) return;
+
+        const rawAmount = evaluateMathExpr(editTxAmount.value);
+        if (isNaN(rawAmount) || rawAmount === 0) {
+          alert("Vui lòng nhập số tiền hợp lệ!");
+          editTxAmount.focus();
+          return;
+        }
+
+        btnSubmitEditTx.disabled = true;
+        btnSubmitEditTx.innerText = t("savingTx") || "Đang lưu...";
+
+        const chosenDate = editTxDate.value;
+        const updatedData = {
+          amount: Math.abs(rawAmount),
+          type: currentEditTxType,
+          category: editTxCategory.value,
+          date: chosenDate,
+          note: editTxNote.value.trim(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+          await db.collection("users").doc(currentUser.uid).collection("transactions").doc(txId).update(updatedData);
+          closeEditTxModal();
+          const newTxMonth = chosenDate.slice(0, 7);
+          if (filterMonth.value !== newTxMonth) {
+            filterMonth.value = newTxMonth;
+            renderAll();
+          }
+        } catch (err) {
+          alert("Lỗi khi cập nhật giao dịch: " + err.message);
+        } finally {
+          btnSubmitEditTx.disabled = false;
+          btnSubmitEditTx.innerText = t("saveChanges") || "Lưu thay đổi";
+        }
+      });
+    }
+
+    window.openEditTxModal = openEditTxModal;
 
     // ==========================================
     // 5.1 CÔNG CỤ TÍNH TOÁN SỐ TIỀN GIAO DỊCH
@@ -1994,6 +2220,14 @@
       return "¥" + val.toLocaleString("ja-JP");
     }
 
+    function calculateCurrentBalance() {
+      if (!transactions || !transactions.length) return 0;
+      return transactions.reduce(function(acc, tItem) {
+        const amt = Math.abs(Number(tItem.amount) || 0);
+        return tItem.type === "income" ? acc + amt : acc - amt;
+      }, 0);
+    }
+
     function renderAll() {
       const selectedMonth = filterMonth.value;
       const filtered = transactions.filter(function(tItem) {
@@ -2017,8 +2251,20 @@
       totalIncomeEl.innerText = formatJPY(inc);
       totalExpenseEl.innerText = formatJPY(exp);
       currentMonthNet = inc - exp;
-      netBalanceEl.innerText = (currentMonthNet < 0 ? "-" : "") + formatJPY(Math.abs(currentMonthNet));
-      netBalanceEl.className = "text-base font-bold mt-1 " + (currentMonthNet < 0 ? "text-rose-600" : "text-slate-800");
+      totalCurrentBalance = calculateCurrentBalance();
+      netBalanceEl.innerText = (totalCurrentBalance < 0 ? "-" : "") + formatJPY(Math.abs(totalCurrentBalance));
+      netBalanceEl.className = "text-sm sm:text-base lg:text-lg font-bold mt-1 truncate " + (totalCurrentBalance < 0 ? "text-rose-600" : "text-slate-800");
+
+      if (netBalanceSub) {
+        const sign = currentMonthNet >= 0 ? "+" : "-";
+        netBalanceSub.innerText = (t("monthNet") || "Thu - Chi") + ": " + sign + formatJPY(Math.abs(currentMonthNet));
+        netBalanceSub.className = "text-[10px] mt-0.5 truncate hidden sm:block font-medium " + (currentMonthNet < 0 ? "text-rose-500" : "text-slate-400");
+      }
+
+      if (cardBalance) {
+        const sign = currentMonthNet >= 0 ? "+" : "-";
+        cardBalance.title = "Số dư hiện tại: " + formatJPY(totalCurrentBalance) + " (" + (t("monthNet") || "Thu - Chi") + " tháng " + selectedMonth + ": " + sign + formatJPY(Math.abs(currentMonthNet)) + ") • Bấm để điều chỉnh số dư ví";
+      }
 
       // Tính toán giao dịch trong tuần này
       const weekRange = getCurrentWeekRange();
@@ -2219,14 +2465,17 @@
         const amountClass = tItem.type === "income" ? "text-emerald-600" : "text-slate-800";
         const sign = tItem.type === "income" ? "+" : "-";
 
-        return '<div class="py-2.5 flex items-center justify-between">' +
+        return '<div class="py-2.5 flex items-center justify-between border-b border-slate-50 last:border-none">' +
           '<div>' +
             '<p class="font-semibold text-slate-800 text-xs">' + tCat(tItem.category) + noteSpan + '</p>' +
             '<p class="text-[11px] text-slate-400 mt-0.5">' + tItem.date + '</p>' +
           '</div>' +
-          '<div class="flex items-center gap-2">' +
+          '<div class="flex items-center gap-1.5 sm:gap-2">' +
             '<span class="font-bold text-xs ' + amountClass + '">' + sign + formatJPY(tItem.amount) + '</span>' +
-            '<button onclick="deleteTx(\'' + tItem.id + '\')" class="text-slate-300 hover:text-rose-500 text-xs px-1">✕</button>' +
+            '<button onclick="openEditTxModal(\'' + tItem.id + '\')" class="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100 transition" title="' + (t("editTxTitle") || "Sửa giao dịch") + '">' +
+              '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>' +
+            '</button>' +
+            '<button onclick="deleteTx(\'' + tItem.id + '\')" class="text-slate-300 hover:text-rose-500 text-xs p-1 rounded hover:bg-slate-100 transition" title="' + (t("deleteBtn") || "Xóa") + '">✕</button>' +
           '</div>' +
         '</div>';
       }).join("");
@@ -2553,6 +2802,31 @@
         if (balLabel) setText(balLabel, t.netBalance);
         const cardBal = document.getElementById("cardBalance");
         if (cardBal && t.cardBalanceTitle) cardBal.title = t.cardBalanceTitle;
+        if (lblIncomeSub && t.monthPeriodSelected) setText(lblIncomeSub, t.monthPeriodSelected);
+        if (lblExpenseSub && t.monthPeriodSelected) setText(lblExpenseSub, t.monthPeriodSelected);
+
+        const lblEditTxTitle = document.getElementById("lblEditTxTitle");
+        if (lblEditTxTitle && t.editTxTitle) setText(lblEditTxTitle, t.editTxTitle);
+        const lblEditTxSub = document.getElementById("lblEditTxSub");
+        if (lblEditTxSub && t.editTxSub) setText(lblEditTxSub, t.editTxSub);
+        const btnEditTypeExpenseEl = document.getElementById("btnEditTypeExpense");
+        if (btnEditTypeExpenseEl && t.expenseBtn) setText(btnEditTypeExpenseEl, t.expenseBtn);
+        const btnEditTypeIncomeEl = document.getElementById("btnEditTypeIncome");
+        if (btnEditTypeIncomeEl && t.incomeBtn) setText(btnEditTypeIncomeEl, t.incomeBtn);
+        const lblEditTxAmount = document.getElementById("lblEditTxAmount");
+        if (lblEditTxAmount && t.amountLbl) setText(lblEditTxAmount, t.amountLbl);
+        const lblEditTxDate = document.getElementById("lblEditTxDate");
+        if (lblEditTxDate && t.dateLbl) setText(lblEditTxDate, t.dateLbl);
+        const lblEditTxCategory = document.getElementById("lblEditTxCategory");
+        if (lblEditTxCategory && t.catLbl) setText(lblEditTxCategory, t.catLbl);
+        const lblEditTxNote = document.getElementById("lblEditTxNote");
+        if (lblEditTxNote && t.noteLbl) setText(lblEditTxNote, t.noteLbl);
+        const btnCancelEditTx = document.getElementById("btnCancelEditTx");
+        if (btnCancelEditTx && t.cancelBtn) setText(btnCancelEditTx, t.cancelBtn);
+        const btnSubmitEditTxEl = document.getElementById("btnSubmitEditTx");
+        if (btnSubmitEditTxEl && t.saveChanges) {
+          setText(btnSubmitEditTxEl, btnSubmitEditTxEl.disabled ? (t.savingTx || "Đang lưu...") : t.saveChanges);
+        }
 
         const txFormEl = document.getElementById("txForm");
         if (txFormEl) {
